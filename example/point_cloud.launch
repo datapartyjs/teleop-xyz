@@ -1,0 +1,45 @@
+<launch>
+  <arg name="port" default="4000" />
+  <arg name="address" default="" />
+  <arg name="ssl" default="false" />
+  <arg name="certfile" />
+  <arg name="keyfile" />
+  <arg name="authenticate" default="false" />
+  <param name="enable_statistics" type="bool" value="true"/>
+  
+  <group if="$(arg ssl)">
+    <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
+      <param name="certfile" value="$(arg certfile)" />
+      <param name="keyfile" value="$(arg keyfile)" />
+      <param name="authenticate" value="$(arg authenticate)" />
+      <param name="port" value="$(arg port)"/>
+      <param name="address" value="$(arg address)"/>
+    </node>
+  </group>
+
+  <group unless="$(arg ssl)">
+    <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
+      <param name="authenticate" value="$(arg authenticate)" />
+      <param name="port" value="$(arg port)"/>
+      <param name="address" value="$(arg address)"/>
+    </node>
+  </group>
+
+  <node name="rosapi" pkg="rosapi" type="rosapi_node"/>
+  <node name="tf2_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher"/> 
+
+  <node name="image_streamer" pkg="web_video_server" type="web_video_server">
+    <param name="ros_threads" value="4"/>
+    <param name="server_threads" value="10"/>
+    <param name="quality" value="55"/>
+  </node>
+
+  <node name="depthcloud_encoder" pkg="depthcloud_encoder" type="depthcloud_encoder_node">
+    <param name="depth" value="/camera/depth_registered/image_float"/>
+    <param name="rgb" value="/camera/rgb/image_rect_color"/>
+  </node>
+
+  <node name="point_downsample" pkg="point_downsample" type="point_downsample_node" respawn="true"/>
+  <node name="waas_control" pkg="waas_control" type="waas_control"/>
+  <node name="rviz" pkg="rviz" type="rviz"/>
+</launch>

@@ -1,0 +1,238 @@
+* {
+  margin:0;
+  padding:0;
+}
+
+body{
+  background-color: black;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.header {
+  background: rgb(15, 22, 20);
+  height: 40px;
+  color: white;
+  font-family: 'Roboto';
+  font-size: 35px;
+  margin: 0 0 0 0;
+  padding: 0;
+  text-align: center;
+  text-decoration: none;
+  line-height: 40px; /* same as height! */
+}
+
+.center-modal {
+  z-index: 1; /* Sit on top */
+  width: 100px;
+  height: 100px;
+  margin:0 auto;
+  display:table;
+  position: absolute;
+  left: 0;
+  right:0;
+  top: 15%; 
+  -webkit-transform:translateY(-15%);
+  -moz-transform:translateY(-15%);
+  -ms-transform:translateY(-15%);
+  -o-transform:translateY(-15%);
+  transform:translateY(-15%);
+}
+
+.hidden {
+  visibility: hidden;
+  display: none;
+}
+
+
+.rainbows {
+  text-align: center;
+  font-family: 'Roboto';
+  font-size: 150px;
+  color: #fff;
+  text-shadow: -4px 4px #ef3550,
+               -8px 8px #f48fb1,
+               -12px 12px #7e57c2,
+               -16px 16px #2196f3,
+               -20px 20px #26c6da,
+               -24px 24px #43a047,
+               -28px 28px #eeff41,
+               -32px 32px #f9a825,
+               -36px 36px #ff5722;
+
+  animation: rainbowIn 2s ease-in;
+}
+
+@keyframes rainbowIn {
+  from {opacity: 0; font-size: 5px;
+    text-shadow: 0px 0px #ef3550,
+                 0px 0px #f48fb1,
+                 0px 0px #7e57c2,
+                 0px 0px #2196f3,
+                 0px 0px #26c6da,
+                 0px 0px #43a047,
+                 0px 0px #eeff41,
+                 0px 0px #f9a825,
+                 0px 0px #ff5722;
+  } 
+  to {opacity: 1; font-size: 150px;
+    text-shadow: -4px 4px #ef3550,
+               -8px 8px #f48fb1,
+               -12px 12px #7e57c2,
+               -16px 16px #2196f3,
+               -20px 20px #26c6da,
+               -24px 24px #43a047,
+               -28px 28px #eeff41,
+               -32px 32px #f9a825,
+               -36px 36px #ff5722;
+  } 
+}
+
+@keyframes rainbowOut {
+  to {opacity: 0; font-size: 5px;
+    text-shadow: 0px 0px #ef3550,
+                 0px 0px #f48fb1,
+                 0px 0px #7e57c2,
+                 0px 0px #2196f3,
+                 0px 0px #26c6da,
+                 0px 0px #43a047,
+                 0px 0px #eeff41,
+                 0px 0px #f9a825,
+                 0px 0px #ff5722;
+  } 
+  from {opacity: 1; font-size: 150px;
+    text-shadow: -4px 4px #ef3550,
+               -8px 8px #f48fb1,
+               -12px 12px #7e57c2,
+               -16px 16px #2196f3,
+               -20px 20px #26c6da,
+               -24px 24px #43a047,
+               -28px 28px #eeff41,
+               -32px 32px #f9a825,
+               -36px 36px #ff5722;
+  } 
+}
+
+.content {
+  min-height: calc(100vh - 70px);
+  /* 80px header + 40px footer = 120px  */
+  background: rgb(0, 0, 0);
+}
+
+.status-area{
+  z-index: 1;
+  margin: 10px;
+  display:table;
+  position: absolute;
+  right:0;
+  top: 0; 
+  color: rgb(255, 255, 255);
+}
+
+.green-dot {
+  height: 20px;
+  width: 20px;
+  color: rgb(0, 255, 72);
+  background-color: rgb(0, 255, 72);
+  border-radius: 50%;
+  border-width: 1px;
+  border-color:rgb(255, 255, 255);
+  display: inline-block;
+}
+
+
+footer {
+  position: fixed; /* Stay in place */
+  z-index: 2;
+  height: 30px;
+  color: white;
+  right: 10px;
+  bottom: 0;
+}
+
+
+
+  /* The Modal (background) */
+  .modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    -webkit-animation-name: fadeIn; /* Fade in the background */
+    -webkit-animation-duration: 0.4s;
+    animation-name: fadeIn;
+    animation-duration: 0.4s
+  }
+  
+  /* Modal Content */
+  .modal-content {
+    position: fixed;
+    bottom: 0;
+    background-color: #fefefe;
+    width: 100%;
+    -webkit-animation-name: slideIn;
+    -webkit-animation-duration: 0.4s;
+    animation-name: slideIn;
+    animation-duration: 0.4s;
+    font-size: 24px;
+  }
+
+  .setup-submit {
+    font-size: 24px;
+    padding: 0px 24px;
+  }
+  
+  /* The Close Button */
+  .close {
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  
+  .close:hover,
+  .close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  .modal-header {
+    padding: 2px 16px;
+    background-color: #5cb85c;
+    color: white;
+  }
+  
+  .modal-body {padding: 2px 16px;}
+  
+  .modal-footer {
+    padding: 2px 16px;
+    background-color: #5cb85c;
+    color: white;
+  }
+  
+  /* Add Animation */
+  @-webkit-keyframes slideIn {
+    from {bottom: -300px; opacity: 0} 
+    to {bottom: 0; opacity: 1}
+  }
+  
+  @keyframes slideIn {
+    from {bottom: -300px; opacity: 0}
+    to {bottom: 0; opacity: 1}
+  }
+  
+  @-webkit-keyframes fadeIn {
+    from {opacity: 0} 
+    to {opacity: 1}
+  }
+  
+  @keyframes fadeIn {
+    from {opacity: 0} 
+    to {opacity: 1}
+  }

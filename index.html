@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<script type="text/javascript" src="static/js/three.min.js"></script>
+<script type="text/javascript" src="static/js/eventemitter2.min.js"></script>
+<script type="text/javascript" src="static/js/roslib.js"></script>
+<script type="text/javascript" src="static/js/ros3d.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Roboto:ital,wght@1,900&family=Zen+Tokyo+Zoo&display=swap" rel="stylesheet">
+<script type="text/javascript" src="dist/teleopxyz.js"></script>
+<link rel="stylesheet" href="static/main.css">
+
+
+<script>
+
+  
+function openConnectionForm(){
+  var modal = document.getElementById("myModal")
+  modal.style.display = "block";
+
+  var logo = document.getElementById('logo')
+  logo.classList.remove('hidden')
+}
+
+function closeConnectionForm(){
+  var modal = document.getElementById("myModal");
+  modal.style.display = "none";
+  var logo = document.getElementById('logo')
+  logo.classList.add('hidden')
+}
+
+function setConnectionStatus(text, color){
+  const statusText = document.getElementById('status-text')
+  statusText.textContent = text+' '
+
+  const statusDot = document.getElementById('status-dot')
+  statusDot.style.color = color
+  statusDot.style.backgroundColor = color
+}
+
+function init(){
+  const form = document.getElementsByName('connectionForm')[0]
+  form.addEventListener('submit', startConnection);
+
+  // Get the modal
+  var modal = document.getElementById("myModal");
+
+  // Get the button that opens the modal
+  var btn = document.getElementById("myBtn");
+
+  // Get the <span> element that closes the modal
+  var span = document.getElementsByClassName("close")[0];
+
+  // When the user clicks on <span> (x), close the modal
+  span.onclick = closeConnectionForm
+
+  // When the user clicks anywhere outside of the modal, close it
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      closeConnectionForm()
+    }
+  }
+
+  setConnectionStatus('Offline', 'grey')
+  openConnectionForm()
+
+}
+
+
+
+
+async function startConnection(e){
+  event.preventDefault()
+  console.log('startConnection')
+  const formData = new FormData(e.target);
+  const formProps = Object.fromEntries(formData);
+  const reader = new FileReader()
+  console.log(formProps)
+
+  let fileLoad = new Promise((resolve, reject)=>{
+    reader.onload = resolve
+    reader.onabort = reject
+    reader.addEventListener('error', reject)
+  })
+  
+  reader.readAsText(formProps.rvizFile)
+
+  await fileLoad
+
+  console.log(reader.result)
+
+  let viz = new teleopxyz()
+
+  try{
+    await viz.start(formProps.rosapiHost, reader.result)
+  }
+  catch(err){
+    console.log('error', err)
+    setConnectionStatus('Error:  '+formProps.rosapiHost, 'red')
+    return
+  }
+  
+
+  closeConnectionForm()
+
+  setConnectionStatus('Connected to: '+formProps.rosapiHost, 'rgb(0, 255, 72)')
+
+}
+
+function reload(){
+  window.location = ''+window.location
+}
+
+function gotoGithub(){
+  window.location = 'https://github.com/datapartyjs/teleop-xyz'
+}
+
+</script>
+</head>
+
+<body onload="init()">
+
+
+
+  <div class="box">
+    <div class='header' id='header' onclick='reload()'>teleop.xyz</div>
+    <div id="viewer" class="content"></div>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+      <!-- Modal content -->
+      <div class="modal-content">
+        <form name="connectionForm">
+        <div class="modal-header">
+          <span class="close">&times;</span>
+          <h2>Setup Connection</h2>
+        </div>
+        <div class="modal-body">
+          
+            <p>
+              <labal for="rosapiHost">rosapi host</labal>
+              <input type="url" name="rosapiHost" placeholder="ws://"/>
+            </p>
+        
+            <p>
+              <labal for="rvizFile">rviz file</labal>
+              <input type="file" name="rvizFile" accept=".rviz"/>
+            </p>
+
+            <br>
+  
+            <p>
+              <center><button class='setup-submit' type="submit">connect</button></center>
+            </p>
+        </div>
+        <div class="modal-footer" onclick='gotoGithub()'>
+          <h3>Follow & Support  
+            <a href='https://github.com/datapartyjs/teleop-xyz' target='_'> <img src='static/images/github.png' height="32px"></a>
+          </h3>
+        </div>
+        </form>
+      </div>
+
+    </div>
+
+    <div class="center-modal rainbows" id='logo' hidden=true>teleop.xyz</div>
+
+    <div class="status-area">
+      <span id='status-text'>Status</span> 
+      <span id='status-dot' class='green-dot'></span>
+    </div>
+
+    <footer class='footer'>
+      <center>
+      <small>© 2021 <a href='https://www.dataparty.xyz/'>dataparty llc</a></small>
+      </center>
+    </footer>
+  </div>
+</body>
+</html>
