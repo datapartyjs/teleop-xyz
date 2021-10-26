@@ -1,7 +1,9 @@
 const debug = require('debug')('teleop')
 const reach = require('./reach')
 const yaml = require('yaml-js')
+const path = require('path')
 
+const TfTree = require('./TfTree')
 
 class TeleOp {
   constructor(){
@@ -71,36 +73,28 @@ class TeleOp {
     }));*/
 
 
-    debug('Globals', { globalOptions })
+    console.log('Globals', { globalOptions })
+
+
 
     this.tfClient = new ROSLIB.TFClient({
       ros: this.ros,
-      serverName: `/tf2_republisher`,
-      angularThres: 0.01,
+      serverName: `/tf2_web_republisher`,   //! Need to make configurable and autodetect correct one on the fly
+      angularThres: 0.03,
       transThres: 0.01,
-      rate: globalOptions.frameRate,
+      //rate: globalOptions.frameRate,
       fixedFrame: globalOptions.fixedFrame
     })
-
-    let axes = new ROS3D.Axes({
-      shaftRadius: 0.03,
-      headRadius: 0.075,
-      headLength: 0.3
-    })
-
-    this.baseLink = {
-      axes: axes,
-      sn: new ROS3D.SceneNode({
-        frameID: globalOptions.fixedFrame,
-        tfClient: this.tfClient,
-        object: axes
-      })
-    }
 
     let displays = reach(this.fileContent, 'Visualization Manager.Displays', [])
 
     for(let display of displays){
       debug(`parsing display '${display.Class}'`, { display })
+
+      if(!display.Enabled){
+        debug(` not enabled`)
+        continue
+      }
 
       let obj = undefined;
       switch (display.Class) {
@@ -113,6 +107,30 @@ class TeleOp {
           })
           this.viewer.addObject(obj)
           break
+        case 'rviz/TF':
+          console.log(display)
+          const allEnabled = display.Frames['All Enabled'] || false
+
+          const frames = Object.fromEntries(
+            Object.entries(display.Frames)
+            .map(([key,value])=> {
+              return [key, allEnabled || value.Value && true]
+            })
+            .filter(([key, value]) => key != 'All Enabled')
+          )
+          
+          console.log('frames', frames)
+          obj = new TfTree({
+            frames,
+            ros: this.ros,
+            tfClient: this.tfClient,
+            rootObject: this.viewer.scene,
+            scale: display['Marker Scale'],
+            showAxes: display['Show Axes'],
+            showNames: display['Show Names'],
+            showArrows: display['Show Arrows']
+          })
+          break;
         case 'rviz/LaserScan':
          console.warn(display.Class, 'support is in development and untested')
           obj = new ROS3D.LaserScan({
@@ -143,6 +161,14 @@ class TeleOp {
 
           console.log('pt', display["Color Transformer"])
           break
+        case 'rviz/Marker':
+          obj = new ROS3D.MarkerClient({
+            ros: this.ros,
+            topic: `${display['Marker Topic']}`,
+            rootObject: this.viewer.scene,
+            tfClient: this.tfClient
+          })
+          break
         case 'rviz/MarkerArray':
           obj = new ROS3D.MarkerArrayClient({
             ros: this.ros,
@@ -167,9 +193,13 @@ class TeleOp {
             topic: `${display.Topic}`,
             rootObject: this.viewer.scene,
             tfClient: this.tfClient,
-            keep: 10,
-            length: display.Length,
-            color: TeleOp.rvizColor2hex(display.Color, '#cc00ff')
+            keep: display.Keep,
+            length: reach(display, 'Shape.Axes Length'),
+            headlength: reach(display, 'Shape.Head Length'),
+            shaftLength: reach(display, 'Shape.Shaft Length'),
+            headDiameter: reach(display, 'Shape.Head Radius')*2.0,
+            shaftDiameter: reach(display, 'Shape.Shaft Radius')*2.0,
+            color: TeleOp.rvizColor2hex(reach(display,'Shape.Color'), '#cc00ff')
           })
           break
         case 'rviz/Path':
@@ -182,8 +212,60 @@ class TeleOp {
             color: TeleOp.rvizColor2hex(display.Color, '#cc00ff')
           })
           break
+        case 'rviz/RobotModel':
+          debug(display.Class)
+          console.log(display)
+
+          let paramPath = path.join('/', display['Robot Description'])
+
+          console.log(paramPath)
+
+          const urdfText = await new Promise((resolve,reject)=>{
+            let descParam = new ROSLIB.Param({
+              ros: this.ros, name: paramPath
+            })
+
+            descParam.get(val=>{ resolve(val) })
+          })
+
+          console.log('urdf', urdfText)
+
+          let publicModelPath = ''
+          if(urdfText.length > 0){
+            let parser = new DOMParser()
+            let xmlDoc = parser.parseFromString(urdfText, 'text/xml')
+
+            const robotTag = xmlDoc.getElementsByTagName('robot')[0]
+            const robotName = robotTag.getAttribute('name')
+            console.log('urdf robot name', robotName, robotName.indexOf('magni'))
+            if(robotName.indexOf('magni') != -1){
+              publicModelPath = 'https://raw.githubusercontent.com/UbiquityRobotics/magni_robot/noetic-devel'
+            }
+          }
+          
+
+          try{
+            obj = new ROS3D.UrdfClient({
+              path: publicModelPath,
+              ros: this.ros,
+              param: paramPath,
+              rootObject: this.viewer.scene,
+              tfClient: this.tfClient,
+              tfPrefix: display['TF Prefix']
+            })
+          }
+          catch(err){
+            console.log('urdf error', err)
+            //delete obj
+            obj = null
+          }
+          
+
+          console.log(obj)
+          break
         default:
           console.warn(`display class '${display.Class}' not supported`)
+          console.warn(display)
           break
       }
 

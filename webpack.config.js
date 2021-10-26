@@ -25,6 +25,7 @@ var browser_config = {
   },
   resolve: {
     fallback: {
+      "path": require.resolve("path-browserify"),
       "zlib": require.resolve("zlib-browserify"),
       "http": require.resolve("http-browserify"),
       "https": require.resolve("https-browserify"),

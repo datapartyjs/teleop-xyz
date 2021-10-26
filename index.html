@@ -13,6 +13,8 @@
 
 <script>
 
+let viz = null
+
   
 function openConnectionForm(){
   var modal = document.getElementById("myModal")
@@ -89,7 +91,7 @@ async function startConnection(e){
 
   console.log(reader.result)
 
-  let viz = new teleopxyz()
+  viz = new teleopxyz()
 
   try{
     await viz.start(formProps.rosapiHost, reader.result)
