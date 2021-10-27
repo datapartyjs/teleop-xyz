@@ -14,7 +14,9 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "yaml-js": "^0.3.1"
+    "debug": "^3.1.0",
+    "gamepad.js": "^1.0.4",
+    "yaml": "^1.10.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.13.14",

@@ -1,7 +1,15 @@
-const debug = require('debug')('teleop')
+const debug = require('debug')('teleop.TeleOp')
 const reach = require('./reach')
-const yaml = require('yaml-js')
+const yaml = require('yaml')
 const path = require('path')
+
+const { GamepadListener } = require('gamepad.js')
+
+debug('hello')
+
+
+//console.log('process', process)
+
 
 const TfTree = require('./TfTree')
 
@@ -16,6 +24,14 @@ class TeleOp {
     this.viewer = null
     this.tfClient = null
     this.baseLink = null
+  this.gamepadListener = new GamepadListener({analog: true/*, deadZone: 0.2*/})
+
+    this.joyMsg = null
+    this.joyIndex = null
+    this.joyPub = null
+    this.joyEnabled = true
+    this.joyAutoRepeatRate = 4
+    this.joyRepeatTimer = null
   }
 
   async connectRos(){
@@ -44,7 +60,7 @@ class TeleOp {
 
     this.host = host
     this.divId = divId
-    this.fileContent = yaml.load(rvizFile)
+    this.fileContent = yaml.parse(rvizFile)
 
     debug('fileContent', this.fileContent)
 
@@ -86,13 +102,121 @@ class TeleOp {
       fixedFrame: globalOptions.fixedFrame
     })
 
+    this.gamepadListener.on('gamepad:connected', this.addGamepad.bind(this))
+    this.gamepadListener.on('gamepad:disconnected', this.removeGamepad.bind(this))
+    this.gamepadListener.on('gamepad:axis', this.onAxisChange.bind(this))
+    this.gamepadListener.on('gamepad:button', this.onAxisChange.bind(this))
+
+    this.gamepadListener.start()
+
+    await this.renderFromFile()
+  }
+
+  addGamepad(event){
+    debug('addGamepad', event)
+
+
+    if(this.joyPub == null){
+      this.joyIndex = reach(event, 'detail.index')
+      
+      
+
+      debug('advertising /joy idx=',this.joyIndex)
+      this.joyPub = new ROSLIB.Topic({
+        ros : this.ros,
+        name : '/joy',
+        messageType : 'sensor_msgs/Joy'
+      })
+  
+      this.joyPub.advertise()
+
+      const gamepad = reach(event, 'detail.gamepad')
+      this.updateJoy(gamepad)
+
+    }
+  }
+
+  removeGamepad(event){
+    debug('removeGamepad', event)
+
+    //! cleanup timer
+    if(this.joyRepeatTimer != null){
+      clearTimeout(this.joyRepeatTimer)
+      this.joyRepeatTimer = null
+    }
+
+    //! cleanup publisher
+    if(this.joyPub != null && event.detail.index == this.joyIndex){
+      this.joyPub.unadvertise()
+    }
+
+
+    this.joyPub = null
+    this.joyIndex = null
+  }
+
+  getJoyMsgFromGamepad(gamepad){
+    return new ROSLIB.Message({
+      axes: [...gamepad.axes],
+      buttons: gamepad.buttons.map( btn => parseInt(btn.value) )
+    })
+  }
+
+  autoUpdateJoy(){
+    if(this.joyMsg!=null){
+      this.joyPub.publish(this.joyMsg)
+
+      this.joyRepeatTimer = null
+      this.debounceJoyAutoUpdate()
+    }
+  }
+
+  debounceJoyAutoUpdate(){
+    if(this.joyAutoRepeatRate > 0.0){
+      let repeatMs = 1000.0 / this.joyAutoRepeatRate
+      if(this.joyRepeatTimer != null){
+        clearTimeout(this.joyRepeatTimer)
+      }
+
+      //! set timer further into the future
+      this.joyRepeatTimer = setTimeout(this.autoUpdateJoy.bind(this), repeatMs)
+
+    }
+  }
+
+  updateJoy(gamepad){
+
+    if(!this.joyEnabled){return}
+
+    this.joyMsg = this.getJoyMsgFromGamepad(gamepad)
+
+    this.joyPub.publish(this.joyMsg)
+    this.debounceJoyAutoUpdate()
+  }
+
+  onAxisChange(event){
+    if(this.joyIndex != reach(event,'detail.index')){ return }
+
+    const gamepad = reach(event, 'detail.gamepad')
+    this.updateJoy(gamepad)
+  }
+
+  onButtonChange(event){
+    if(this.joyIndex != reach(event,'detail.index')){ return }
+
+    const gamepad = reach(event, 'detail.gamepad')
+    this.updateJoy(gamepad)
+  }
+
+  async renderFromFile(){
+
     let displays = reach(this.fileContent, 'Visualization Manager.Displays', [])
 
     for(let display of displays){
-      debug(`parsing display '${display.Class}'`, { display })
+      //debug(`parsing display '${display.Class}'`, { display })
 
       if(!display.Enabled){
-        debug(` not enabled`)
+        debug(`skipping ${display.Class}`)
         continue
       }
 
@@ -108,7 +232,7 @@ class TeleOp {
           this.viewer.addObject(obj)
           break
         case 'rviz/TF':
-          console.log(display)
+          debug(display.Class, display.Name)
           const allEnabled = display.Frames['All Enabled'] || false
 
           const frames = Object.fromEntries(
@@ -119,20 +243,23 @@ class TeleOp {
             .filter(([key, value]) => key != 'All Enabled')
           )
           
-          console.log('frames', frames)
+          debug('\t','frames', frames)
           obj = new TfTree({
             frames,
             ros: this.ros,
             tfClient: this.tfClient,
             rootObject: this.viewer.scene,
-            scale: display['Marker Scale'],
+            scale: parseFloat(display['Marker Scale']),
             showAxes: display['Show Axes'],
             showNames: display['Show Names'],
             showArrows: display['Show Arrows']
           })
+
+          await obj.setup()
           break;
         case 'rviz/LaserScan':
-         console.warn(display.Class, 'support is in development and untested')
+          debug(display.Class, display.Topic)
+
           obj = new ROS3D.LaserScan({
             ros: this.ros,
             topic: `${display.Topic}`,
@@ -147,6 +274,7 @@ class TeleOp {
           })
           break
         case 'rviz/PointCloud2':
+          debug(display.Class, display.Topic)
           obj = new ROS3D.PointCloud2({
             ros: this.ros,
             topic: `${display.Topic}`,
@@ -159,9 +287,10 @@ class TeleOp {
             }
           })
 
-          console.log('pt', display["Color Transformer"])
+          //debug('\t','pt', display["Color Transformer"])
           break
         case 'rviz/Marker':
+          debug(display.Class, display['Marker Topic'])
           obj = new ROS3D.MarkerClient({
             ros: this.ros,
             topic: `${display['Marker Topic']}`,
@@ -170,6 +299,7 @@ class TeleOp {
           })
           break
         case 'rviz/MarkerArray':
+          debug(display.Class, display['Marker Topic'])
           obj = new ROS3D.MarkerArrayClient({
             ros: this.ros,
             topic: `${display['Marker Topic']}`,
@@ -178,6 +308,7 @@ class TeleOp {
           })
           break
         case 'rviz/Map':
+          debug(display.Class, display.Topic)
           obj = new ROS3D.OccupancyGridClient({
             ros: this.ros,
             topic: `${display.Topic}`,
@@ -187,7 +318,7 @@ class TeleOp {
           })
           break
         case 'rviz/Odometry':
-          debug(display.Class)
+          debug(display.Class, display.Topic)
           obj = new ROS3D.Odometry({
             ros: this.ros,
             topic: `${display.Topic}`,
@@ -214,11 +345,11 @@ class TeleOp {
           break
         case 'rviz/RobotModel':
           debug(display.Class)
-          console.log(display)
+          //console.log(display)
 
           let paramPath = path.join('/', display['Robot Description'])
 
-          console.log(paramPath)
+          //console.log(paramPath)
 
           const urdfText = await new Promise((resolve,reject)=>{
             let descParam = new ROSLIB.Param({
@@ -228,41 +359,57 @@ class TeleOp {
             descParam.get(val=>{ resolve(val) })
           })
 
-          console.log('urdf', urdfText)
+          debug('\t','urdf', urdfText)
 
           let publicModelPath = ''
-          if(urdfText.length > 0){
+          if(urdfText != null && urdfText.length > 0){
             let parser = new DOMParser()
             let xmlDoc = parser.parseFromString(urdfText, 'text/xml')
 
             const robotTag = xmlDoc.getElementsByTagName('robot')[0]
             const robotName = robotTag.getAttribute('name')
-            console.log('urdf robot name', robotName, robotName.indexOf('magni'))
+            debug('\t','urdf robot name', robotName, robotName.indexOf('magni'))
             if(robotName.indexOf('magni') != -1){
               publicModelPath = 'https://raw.githubusercontent.com/UbiquityRobotics/magni_robot/noetic-devel'
             }
+
+            try{
+              obj = new ROS3D.UrdfClient({
+                path: publicModelPath,
+                ros: this.ros,
+                param: paramPath,
+                rootObject: this.viewer.scene,
+                tfClient: this.tfClient,
+                tfPrefix: display['TF Prefix']
+              })
+            }
+            catch(err){
+              debug('\t','urdf error', err)
+              //delete obj
+              obj = null
+            }
+            
+  
+            debug('\t',obj)
           }
           
-
-          try{
-            obj = new ROS3D.UrdfClient({
-              path: publicModelPath,
-              ros: this.ros,
-              param: paramPath,
-              rootObject: this.viewer.scene,
-              tfClient: this.tfClient,
-              tfPrefix: display['TF Prefix']
-            })
-          }
-          catch(err){
-            console.log('urdf error', err)
-            //delete obj
-            obj = null
-          }
-          
-
-          console.log(obj)
           break
+        case 'rviz/InteractiveMarkers':
+          debug(display.Class, display['Update Topic'])
+
+          const topic = display['Update Topic'].replace('/update','')
+
+          debug('\t', 'topic', topic)
+
+          obj = new ROS3D.InteractiveMarkerClient({
+            topic,
+            ros: this.ros,
+            tfClient: this.tfClient,
+            camera: this.viewer.camera,
+            rootObject: this.viewer.selectableObjects,
+          })
+
+          break;
         default:
           console.warn(`display class '${display.Class}' not supported`)
           console.warn(display)

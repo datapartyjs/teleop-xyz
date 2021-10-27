@@ -1,3 +1,17 @@
+const debug = require('debug')('teleop.TfTree')
+const path = require('path')
+
+async function getTopicType(ros, topic){
+  return new Promise((resolve, reject)=>{
+    ros.getTopicType(topic, resolve, reject)
+  })
+}
+
+
+function cleanPath(str){
+  return path.join('/', str)
+}
+
 
 class TfTree extends THREE.Object3D {
   constructor({ros, tfClient, rootObject, frames, scale, showArrows, showAxes, showNames}){
@@ -6,20 +20,39 @@ class TfTree extends THREE.Object3D {
     this.tfClient = tfClient
     this.rootObject = rootObject
     this.axisScale = scale || 1.0
-    this.frames = frames  //! Map of frameName to frameEnabled
+    this.frames = {} //! Map of frameName to frameEnabled
+
+    for(const [frame, enabled] of Object.entries(frames)){
+      this.markFrame(frame, enabled)
+    }
 
     this.sceneNodes = {}
+
+    this.tfSub = null
+
+    this.tfStaticSub = null
+
+  }
+
+
+  async setup(){
+    const [tfType, tfStaticType] = await Promise.all([
+      getTopicType(this.ros, '/tf'),
+      getTopicType(this.ros, '/tf_static')
+    ])
+
+    debug('types', tfType, tfStaticType)
 
     this.tfSub = new ROSLIB.Topic({
       ros: this.ros,
       name: '/tf',
-      messageType: 'tf/tfMessage'
+      messageType: tfType
     })
 
     this.tfStaticSub = new ROSLIB.Topic({
       ros: this.ros,
       name: '/tf_static',
-      messageType: 'tf2_msgs/TFMessage'
+      messageType: tfStaticType
     })
 
     this.listenForFrames()
@@ -28,24 +61,33 @@ class TfTree extends THREE.Object3D {
   listenForFrames(){
     this.tfSub.subscribe(this.handleTfMessage.bind(this))
     this.tfStaticSub.subscribe(this.handleTfMessage.bind(this))
-    setTimeout(this.stopListeningForFrames.bind(this), 2000)
+    setTimeout(this.stopListeningForFrames.bind(this), 3000)
   }
+
+  frameExists(frame_id){
+    return this.frames[cleanPath(frame_id)] !== undefined
+  }
+
+  markFrame(frame, value){
+    const frame_id = cleanPath(frame)
+    if(!this.frameExists(frame_id)){
+      debug('discovered frame', frame_id)
+      this.frames[frame_id] = value
+    }
+  }
+  
 
   handleTfMessage(msg){
     for(let transform of msg.transforms){
-
-      if(this.frames[transform.header.frame_id] === undefined){
-        this.frames[transform.header.frame_id] = true
-      }
-
-      if(this.frames[transform.child_frame_id] === undefined){
-        this.frames[transform.child_frame_id] = true
-      }
+      this.markFrame(transform.child_frame_id, true)
+      this.markFrame(transform.header.frame_id, true)
     }
-
   }
 
+
+
   stopListeningForFrames(){
+    debug('stopListeningForFrames done')
     this.tfSub.unsubscribe()
     this.tfStaticSub.unsubscribe()
 
@@ -58,14 +100,11 @@ class TfTree extends THREE.Object3D {
     for(const [frame, enabled] of Object.entries(this.frames)){
 
       if(enabled){
-        //console.log('adding', frame)
+        debug('subscribing to frame', frame)
         let axis = new ROS3D.Axes({
-          shaftRadius: 0.03,
-          headRadius: 0.075,
-          headLength: 0.3,
-          scale: this.axisScale,
           lineType: 'full',
-          lineDashLength: 0.1
+          shaftRadius: 0.04,
+          scale: this.axisScale/5.0,
         })
 
         this.sceneNodes[frame] = new ROS3D.SceneNode({
@@ -75,6 +114,9 @@ class TfTree extends THREE.Object3D {
         })
 
         this.rootObject.add(this.sceneNodes[frame])
+      }
+      else {
+        debug('ignoring frame', frame)
       }
     }
   }
