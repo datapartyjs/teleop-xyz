@@ -3,6 +3,8 @@ const reach = require('./reach')
 const yaml = require('yaml')
 const path = require('path')
 
+const Pkg = require('../package.json')
+
 const { GamepadListener } = require('gamepad.js')
 
 debug('hello')
@@ -32,6 +34,10 @@ class TeleOp {
     this.joyEnabled = true
     this.joyAutoRepeatRate = 4
     this.joyRepeatTimer = null
+  }
+
+  static get version(){
+    return Pkg.version
   }
 
   async connectRos(){

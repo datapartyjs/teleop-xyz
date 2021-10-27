@@ -44,6 +44,9 @@ function init(){
   const form = document.getElementsByName('connectionForm')[0]
   form.addEventListener('submit', startConnection);
 
+  const versionText = document.getElementById('version-text')
+  versionText.innerText = 'v'+teleopxyz.version
+
   // Get the modal
   var modal = document.getElementById("myModal");
 
@@ -175,7 +178,8 @@ function gotoGithub(){
 
     <footer class='footer'>
       <center>
-      <small>© 2021 <a href='https://www.dataparty.xyz/'>dataparty llc</a></small>
+        <small>© 2021 <a href='https://www.dataparty.xyz/'>dataparty llc</a></small>
+        <small id='version-text'></small>
       </center>
     </footer>
   </div>
