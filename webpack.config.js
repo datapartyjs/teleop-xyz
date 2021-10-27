@@ -9,7 +9,8 @@ const CompressionPlugin = require('compression-webpack-plugin')
 var nodeExternals = require('webpack-node-externals')
 
 var browser_config = {
-  mode: 'production',
+  mode: 'development',
+  target: 'web',
   entry: {
     '@teleop-xyz': './src/index.js'
   },
@@ -26,10 +27,10 @@ var browser_config = {
   resolve: {
     fallback: {
       "path": require.resolve("path-browserify"),
-      "zlib": require.resolve("zlib-browserify"),
+      /*"zlib": require.resolve("zlib-browserify"),
       "http": require.resolve("http-browserify"),
       "https": require.resolve("https-browserify"),
-      "constants": require.resolve("constants-browserify")
+      "constants": require.resolve("constants-browserify")*/
     }
   },
   /*node: {
@@ -39,9 +40,12 @@ var browser_config = {
   },*/
   plugins: [
     new CompressionPlugin(),
-    new webpack.ProvidePlugin({
+    /*new webpack.ProvidePlugin({
       process: 'process/browser',
-    }),
+    }),*/
+    new webpack.DefinePlugin({
+      'process.env.ENV': JSON.stringify('browser')
+    })
    /* new webpack.DefinePlugin({
       'process.env.ENV': JSON.stringify('web')
     })*//*,
