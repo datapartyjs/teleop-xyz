@@ -1,4 +1,4 @@
-const debug = require('debug')('teleop.TfTree')
+const debug = require('debug')('teleopxyz.TfTree')
 const path = require('path')
 
 async function getTopicType(ros, topic){

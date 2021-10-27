@@ -1,4 +1,4 @@
-const debug = require('debug')('teleop.TeleOp')
+const debug = require('debug')('teleopxyz.TeleOp')
 const reach = require('./reach')
 const yaml = require('yaml')
 const path = require('path')
@@ -7,10 +7,10 @@ const Pkg = require('../package.json')
 
 const { GamepadListener } = require('gamepad.js')
 
-debug('hello')
 
-
-//console.log('process', process)
+console.log(Pkg.name, 'v'+Pkg.version, '🤖')
+console.log('sense, plan, party 🤘')
+console.log('\n\nWelcome fellow humans\n\nset localStorage.debug=\'*\' to activate debug output')
 
 
 const TfTree = require('./TfTree')
@@ -31,7 +31,8 @@ class TeleOp {
     this.joyMsg = null
     this.joyIndex = null
     this.joyPub = null
-    this.joyEnabled = true
+    this.joyEnabled = false
+    this.joyUserOptIn = null
     this.joyAutoRepeatRate = 4
     this.joyRepeatTimer = null
   }
@@ -120,13 +121,21 @@ class TeleOp {
 
   addGamepad(event){
     debug('addGamepad', event)
+    const gamepad = reach(event, 'detail.gamepad')
 
+    if(this.joyUserOptIn == null){
+      debug('prompting user for gamepad/joy support opt-in')
+      this.joyUserOptIn = window.confirm('Gamepad detected - would you like to use it as a /joy publisher?\n\n'+gamepad.id)
+      this.joyEnabled = this.joyUserOptIn
+
+      debug('joyUserOptIn =', this.joyUserOptIn)
+    }
+
+    if(this.joyUserOptIn == false){ return }
 
     if(this.joyPub == null){
       this.joyIndex = reach(event, 'detail.index')
       
-      
-
       debug('advertising /joy idx=',this.joyIndex)
       this.joyPub = new ROSLIB.Topic({
         ros : this.ros,
@@ -136,7 +145,6 @@ class TeleOp {
   
       this.joyPub.advertise()
 
-      const gamepad = reach(event, 'detail.gamepad')
       this.updateJoy(gamepad)
 
     }
@@ -159,6 +167,8 @@ class TeleOp {
 
     this.joyPub = null
     this.joyIndex = null
+    this.joyUserOptIn = null
+    this.joyEnabled = false
   }
 
   getJoyMsgFromGamepad(gamepad){
@@ -169,7 +179,7 @@ class TeleOp {
   }
 
   autoUpdateJoy(){
-    if(this.joyMsg!=null){
+    if(this.joyMsg!=null && this.joyEnabled == true){
       this.joyPub.publish(this.joyMsg)
 
       this.joyRepeatTimer = null
