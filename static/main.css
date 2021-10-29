@@ -101,7 +101,7 @@ a:visited {
  
   /* Position the tooltip text - see examples below! */
   position: fixed;
-  z-index: 2;
+  z-index: 3;
 
   font-size: 20px;
   top: 40px;
