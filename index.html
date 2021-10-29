@@ -108,10 +108,18 @@ async function startConnection(e){
 
   try{
     await viz.start(formProps.rosapiHost, reader.result)
+
+    const helpText = document.getElementById('help-text')
+    helpText.classList.add('hidden')
   }
   catch(err){
     console.log('error', err)
     setConnectionStatus('Error:  '+formProps.rosapiHost, 'red')
+
+    const helpText = document.getElementById('help-text')
+    helpText.classList.remove('hidden')
+    viz = null
+
     return
   }
   
@@ -145,6 +153,8 @@ function gotoGithub(){
     </div>
 
     <div id="viewer" class="content"></div>
+
+    <span id='help-text' class="tooltiptext hidden">See <a href='https://github.com/datapartyjs/teleop-xyz/blob/master/README.md#troubleshooting'>troubleshooting guide</a> for help</span>
 
     <!-- The Modal -->
     <div id="myModal" class="modal">

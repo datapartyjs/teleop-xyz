@@ -15,6 +15,15 @@ body{
 }
 
 
+a:link {
+  color: rgb(27, 172, 27);
+}
+
+/* visited link */
+a:visited {
+  color: rgb(81, 109, 81);
+}
+
 .hidden {
   visibility: hidden;
   display: none;
@@ -77,6 +86,35 @@ body{
 }
 
 
+/* Tooltip container */
+.tooltip {
+  border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+.tooltiptext {
+  background-color: rgba(6, 65, 45);
+  color: #fff;
+  text-align: center;
+  padding: 15px;
+  border-radius: 6px;
+  border: 3px dotted gray;
+ 
+  /* Position the tooltip text - see examples below! */
+  position: fixed;
+  z-index: 2;
+
+  font-size: 20px;
+  top: 40px;
+  right: 20px;
+  
+}
+
+
+/* visited link */
+.tooltiptext a {
+  color: rgb(166, 216, 166);
+}
+
 
 footer {
   position: fixed; /* Stay in place */
@@ -95,14 +133,6 @@ footer {
   flex-direction: row;
 }
 
-footer a:link {
-  color: rgb(27, 172, 27);
-}
-
-/* visited link */
-footer a:visited {
-  color: rgb(81, 109, 81);
-}
 
 
 @media only screen and (min-width: 550px) {
