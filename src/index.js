@@ -12,6 +12,9 @@ console.log(Pkg.name, 'v'+Pkg.version, '🤖')
 console.log('sense, plan, party 🤘')
 console.log('\n\nWelcome fellow humans\n\nset localStorage.debug=\'*\' to activate debug output')
 
+function hasGamepadSupport(){
+  return navigator.getGamepads !== undefined
+}
 
 const TfTree = require('./TfTree')
 
@@ -26,7 +29,7 @@ class TeleOp {
     this.viewer = null
     this.tfClient = null
     this.baseLink = null
-  this.gamepadListener = new GamepadListener({analog: true/*, deadZone: 0.2*/})
+    this.gamepadListener = null
 
     this.joyMsg = null
     this.joyIndex = null
@@ -62,12 +65,22 @@ class TeleOp {
     })
   }
 
+  onResize(event) {
+    debug('resize', event)
+    const width = this.div.clientWidth
+    const height = this.div.clientHeight
+    debug('size', width, height)
+    this.viewer.resize(width, height)
+  }
+
   async start(host, rvizFile, divId="viewer"){
     debug('start')
 
     this.host = host
     this.divId = divId
     this.fileContent = yaml.parse(rvizFile)
+
+    this.div = document.getElementById(this.divId)
 
     debug('fileContent', this.fileContent)
 
@@ -81,8 +94,8 @@ class TeleOp {
 
     this.viewer = new ROS3D.Viewer({
       divID: this.divId,
-      width: window.innerWidth,
-      height: window.innerHeight-70,
+      width: this.div.clientWidth,
+      height: this.div.clientHeight,
       antialias: true,
       background: globalOptions.background
     });
@@ -109,12 +122,16 @@ class TeleOp {
       fixedFrame: globalOptions.fixedFrame
     })
 
-    this.gamepadListener.on('gamepad:connected', this.addGamepad.bind(this))
-    this.gamepadListener.on('gamepad:disconnected', this.removeGamepad.bind(this))
-    this.gamepadListener.on('gamepad:axis', this.onAxisChange.bind(this))
-    this.gamepadListener.on('gamepad:button', this.onAxisChange.bind(this))
-
-    this.gamepadListener.start()
+    if(hasGamepadSupport()){
+      debug('enabling gamepad support')
+      this.gamepadListener = new GamepadListener({analog: true/*, deadZone: 0.2*/})
+      this.gamepadListener.on('gamepad:connected', this.addGamepad.bind(this))
+      this.gamepadListener.on('gamepad:disconnected', this.removeGamepad.bind(this))
+      this.gamepadListener.on('gamepad:axis', this.onAxisChange.bind(this))
+      this.gamepadListener.on('gamepad:button', this.onAxisChange.bind(this))
+  
+      this.gamepadListener.start() 
+    }
 
     await this.renderFromFile()
   }
@@ -132,6 +149,8 @@ class TeleOp {
     }
 
     if(this.joyUserOptIn == false){ return }
+
+    this.joyEnabled = true
 
     if(this.joyPub == null){
       this.joyIndex = reach(event, 'detail.index')
@@ -167,7 +186,7 @@ class TeleOp {
 
     this.joyPub = null
     this.joyIndex = null
-    this.joyUserOptIn = null
+    //this.joyUserOptIn = null
     this.joyEnabled = false
   }
 
@@ -439,11 +458,7 @@ class TeleOp {
 
   }
 
-  onResize(event) {
-    debug('resize')
 
-    this.viewer.resize(event.target.innerWidth, event.target.innerHeight-70)
-  }
 
   disableViz() {
     /** @todo */

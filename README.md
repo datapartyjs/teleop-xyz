@@ -45,3 +45,19 @@ See [`example/point_cloud.launch`](example/point_cloud.launch) for a typical ros
  * Extend Input Methods 🎮
  * Sharing 📨
  * ... and much more ✨ 
+
+
+## Troubleshooting
+
+Having trouble using teleop?
+
+Look for similar issues in our [bug tracker](https://github.com/datapartyjs/teleop-xyz/issues) or try common work arounds below.
+
+### Connection error when using `ws://` instead of `wss://`
+
+Modern web browsers frown upon mixing secure and insecure connections. If you are using the app with an insecure ros_bridge websocket, in the format of `ws://...` you will need to try one of the following solutions.
+
+
+ * Visit the `http` version of the site at [http://teleop.xyz](http://teleop.xyz)
+   * Use incognito mode
+ * Make a browser exception. [See this guide](https://www.damirscorner.com/blog/posts/20210528-AllowingInsecureWebsocketConnections.html)
