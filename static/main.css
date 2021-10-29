@@ -3,31 +3,163 @@
   padding:0;
 }
 
+html, body {
+  height: 100%
+}
+
 body{
-  background-color: black;
+  display: flex;
+  align-items: stretch;
+  background-color: rgb(15, 22, 20);
   font-family: Arial, Helvetica, sans-serif;
 }
 
+
+.hidden {
+  visibility: hidden;
+  display: none;
+}
+
+
 .header {
-  background: rgb(15, 22, 20);
-  height: 40px;
+  visibility: hidden;
+  display: none;
+}
+
+
+.content {
+  z-index: 0;
+  position: absolute;
+  top: 20px;
+  height: calc(100vh - 20px);
+  width: 100vw;
+  /*max-width: 100%;
+  max-height: 100%;*/
+  /*min-height: calc(100vmin - 40px);*/
+  /* 80px header + 40px footer = 120px  */
+  background: rgb(7, 48, 48);
+}
+
+
+.status-area {
+  position:fixed;
+  
+  right: 5px;
+
+  top:2px;
+  font-size: 15px;
+
+  z-index: 1;
   color: white;
-  font-family: 'Roboto';
-  font-size: 35px;
+  
   margin: 0 0 0 0;
   padding: 0;
-  text-align: center;
-  text-decoration: none;
-  line-height: 40px; /* same as height! */
+
+  display: flex;
+  flex-direction: row;
+}
+
+
+.green-dot {
+  right:0;
+  
+  height: 15px;
+  width: 15px;
+  color: rgb(49, 77, 57);
+  background-color: rgb(66, 114, 79);
+  border-radius: 50%;
+  border-width: 1px;
+  border-color:rgb(255, 255, 255);
+  display: table-cell;
+  vertical-align: middle;
+
+  margin: 0 0 0 5px;
+}
+
+
+
+footer {
+  position: fixed; /* Stay in place */
+  z-index: 1;
+  height: 20px;
+  color: rgba(192, 191, 191, 0.897);
+  right: 5px;
+  bottom: 0px;
+  font-size: 15px;
+  text-align: right;
+
+  margin: 0 0 0 0;
+  padding: 0;
+
+  display: flex;
+  flex-direction: row;
+}
+
+footer a:link {
+  color: rgb(27, 172, 27);
+}
+
+/* visited link */
+footer a:visited {
+  color: rgb(81, 109, 81);
+}
+
+
+@media only screen and (min-width: 550px) {
+  .header {
+
+    visibility: visible;
+    display: inline;
+
+    z-index: 0;
+    background: rgb(15, 22, 20);
+    height: 40px;
+    color: white;
+    font-family: 'Roboto';
+    font-size: 35px;
+    margin: 0 0 0 0;
+    padding: 0;
+    text-align: left;
+    text-decoration: none;
+    line-height: 40px; /* same as height! */
+  }
+
+  footer {
+    height: 20px;
+    right: 5px;
+    bottom: 2px;
+    font-size: 18px;
+  }
+
+  .content {
+    top: 40px;
+    height: calc(100vh - 40px);
+  }
+
+
+
+  .status-area {
+    top:12px;
+    right: 15px;
+    font-size: 18px;
+  }
+
+
+  .green-dot {
+    height: 18px;
+    width: 18px;
+  }
+
+
 }
 
 .center-modal {
-  z-index: 1; /* Sit on top */
+  z-index: 2; /* Sit on top */
   width: 100px;
   height: 100px;
   margin:0 auto;
   display:table;
-  position: absolute;
+  position: fixed;
   left: 0;
   right:0;
   top: 15%; 
@@ -38,16 +170,13 @@ body{
   transform:translateY(-15%);
 }
 
-.hidden {
-  visibility: hidden;
-  display: none;
-}
+
 
 
 .rainbows {
   text-align: center;
   font-family: 'Roboto';
-  font-size: 150px;
+  font-size: 10vmin;
   color: #fff;
   text-shadow: -4px 4px #ef3550,
                -8px 8px #f48fb1,
@@ -74,7 +203,7 @@ body{
                  0px 0px #f9a825,
                  0px 0px #ff5722;
   } 
-  to {opacity: 1; font-size: 150px;
+  to {opacity: 1; font-size: 10vmin;
     text-shadow: -4px 4px #ef3550,
                -8px 8px #f48fb1,
                -12px 12px #7e57c2,
@@ -112,42 +241,6 @@ body{
   } 
 }
 
-.content {
-  min-height: calc(100vh - 70px);
-  /* 80px header + 40px footer = 120px  */
-  background: rgb(0, 0, 0);
-}
-
-.status-area{
-  z-index: 1;
-  margin: 10px;
-  display:table;
-  position: absolute;
-  right:0;
-  top: 0; 
-  color: rgb(255, 255, 255);
-}
-
-.green-dot {
-  height: 20px;
-  width: 20px;
-  color: rgb(0, 255, 72);
-  background-color: rgb(0, 255, 72);
-  border-radius: 50%;
-  border-width: 1px;
-  border-color:rgb(255, 255, 255);
-  display: inline-block;
-}
-
-
-footer {
-  position: fixed; /* Stay in place */
-  z-index: 2;
-  height: 30px;
-  color: white;
-  right: 10px;
-  bottom: 0;
-}
 
 
 
@@ -172,7 +265,7 @@ footer {
   /* Modal Content */
   .modal-content {
     position: fixed;
-    bottom: 0;
+    bottom: 20px;
     background-color: #fefefe;
     width: 100%;
     -webkit-animation-name: slideIn;

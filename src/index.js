@@ -62,12 +62,22 @@ class TeleOp {
     })
   }
 
+  onResize(event) {
+    debug('resize', event)
+    const width = this.div.clientWidth
+    const height = this.div.clientHeight
+    debug('size', width, height)
+    this.viewer.resize(width, height)
+  }
+
   async start(host, rvizFile, divId="viewer"){
     debug('start')
 
     this.host = host
     this.divId = divId
     this.fileContent = yaml.parse(rvizFile)
+
+    this.div = document.getElementById(this.divId)
 
     debug('fileContent', this.fileContent)
 
@@ -81,8 +91,8 @@ class TeleOp {
 
     this.viewer = new ROS3D.Viewer({
       divID: this.divId,
-      width: window.innerWidth,
-      height: window.innerHeight-70,
+      width: this.div.clientWidth,
+      height: this.div.clientHeight,
       antialias: true,
       background: globalOptions.background
     });
@@ -439,11 +449,7 @@ class TeleOp {
 
   }
 
-  onResize(event) {
-    debug('resize')
 
-    this.viewer.resize(event.target.innerWidth, event.target.innerHeight-70)
-  }
 
   disableViz() {
     /** @todo */

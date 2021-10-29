@@ -2,17 +2,21 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="description" content="Robotics tools for hackers on the go">
-  <meta name="keywords" content="ROS, Robotics Operating System, rviz, teleop, rosrun, roslaunch, robot, robotics, robot cloud, cloud robotics">
+  <meta name="description" content="Monitor ROS robots directly from the web. Plug in a gameped and teleoperate effortlessly. Teleop.xyz is an open source remote mangement solution for ROS devices.">
+  <meta name="keywords" content="ROS, Robotics Operating System, rviz, teleop, rosrun, roslaunch, robot, robotics, robot cloud, cloud robotics, teleoperation, teleop-xyz, ros multimachine, ros machine, roscloud, roshub, robot fleet, fleet management, remote montitoring">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1">
   <title>teleop.xyz - sense, plan, party 🤘</title>
+
+
   <script type="text/javascript" src="static/js/three.min.js"></script>
   <script type="text/javascript" src="static/js/eventemitter2.min.js"></script>
   <script type="text/javascript" src="static/js/roslib.js"></script>
   <script type="text/javascript" src="static/js/ros3d.js"></script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Roboto:ital,wght@1,900&family=Zen+Tokyo+Zoo&display=swap" rel="stylesheet">
-  <script type="text/javascript" src="dist/teleopxyz.js"></script>
+  
   <link rel="stylesheet" href="static/main.css">
-
+  <script type="text/javascript" src="dist/teleopxyz.js"></script>
 
 <script>
 
@@ -28,6 +32,9 @@ function openConnectionForm(){
 }
 
 function closeConnectionForm(){
+  if(viz == null){
+    return
+  }
   var modal = document.getElementById("myModal");
   modal.style.display = "none";
   var logo = document.getElementById('logo')
@@ -132,6 +139,11 @@ function gotoGithub(){
 
   <div class="box">
     <div class='header' id='header' onclick='reload()'>teleop.xyz</div>
+
+    <div class="status-area">
+      <span id='status-text'>Status</span><span id='status-dot' class='green-dot'></span>
+    </div>
+
     <div id="viewer" class="content"></div>
 
     <!-- The Modal -->
@@ -163,7 +175,7 @@ function gotoGithub(){
             </p>
         </div>
         <div class="modal-footer" onclick='gotoGithub()'>
-          <h3>Follow & Support  
+          <h3>About  
             <a href='https://github.com/datapartyjs/teleop-xyz' target='_'> <img src='static/images/github.png' height="32px"></a>
           </h3>
         </div>
@@ -174,16 +186,10 @@ function gotoGithub(){
 
     <div class="center-modal rainbows" id='logo' hidden=true>teleop.xyz</div>
 
-    <div class="status-area">
-      <span id='status-text'>Status</span> 
-      <span id='status-dot' class='green-dot'></span>
-    </div>
+
 
     <footer class='footer'>
-      <center>
-        <small>© 2021 <a href='https://www.dataparty.xyz/'>dataparty llc</a></small>
-        <small id='version-text'></small>
-      </center>
+      </span> teleop.xyz - <span id='version-text'></span> © 2021 <a href='https://www.dataparty.xyz/'>dataparty llc</a>
     </footer>
   </div>
 </body>
