@@ -28,6 +28,11 @@ See [`example/point_cloud.launch`](example/point_cloud.launch) for a typical ros
    * $btc - `37gHpAMCeYutB8DNbSnxHfwpuqSEs4kFAq`
    * $eth - `0x430c1Bf9CbbbEA845651Ba1536d4B9795696dD5d`
 
+## Video Demo
+
+[![Video of connecting to ROS device](http://img.youtube.com/vi/F6qQgA2zwfc/0.jpg)](http://www.youtube.com/watch?v=F6qQgA2zwfc)
+[![Video of using a gamepad](http://img.youtube.com/vi/Qp8GtCJoLKM/0.jpg)](http://www.youtube.com/watch?v=Qp8GtCJoLKM)
+
 ## Roadmap 🗺️
 
  * Create & modify rviz settings
