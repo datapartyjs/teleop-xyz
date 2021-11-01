@@ -445,6 +445,48 @@ class TeleOp {
           })
 
           break;
+        case 'rviz/PointStamped':
+          debug(display.Class, display['Topic'])
+
+          obj = new ROS3D.Point({
+            ros: this.ros,
+            tfClient: this.tfClient,
+            topic: display['Topic'],
+            color: TeleOp.rvizColor2hex(display['Color']),
+            radius: display['Radius']
+          })
+          break;
+        case 'rviz/Polygon':
+          debug(display.Class, display['Topic'])
+
+          obj = new ROS3D.Polygon({
+            ros: this.ros,
+            tfClient: this.tfClient,
+            topic: display['Topic'],
+            color: TeleOp.rvizColor2hex(display['Color'])
+          })
+
+          break;
+        case 'rviz/Pose':
+        case 'rviz/PoseArray':
+        case 'rviz/PoseWithCovariance':
+          debug(display.Class, display['Topic'])
+          const type = display.Class.replace('rviz/', '')
+          const Class = ROS3D[type]
+
+          obj = new Class({
+            ros: this.ros,
+            tfClient: this.tfClient,
+            topic: display['Topic'],
+            color: TeleOp.rvizColor2hex(display['Color']),
+            length: reach(display, 'Axes Length'),
+            headlength: reach(display, 'Head Length'),
+            shaftLength: reach(display, 'Shaft Length'),
+            headDiameter: reach(display, 'Head Radius')*2.0,
+            shaftDiameter: reach(display, 'Shaft Radius')*2.0
+          })
+
+          break;
         default:
           console.warn(`display class '${display.Class}' not supported`)
           console.warn(display)
