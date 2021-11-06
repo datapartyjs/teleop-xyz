@@ -52,13 +52,13 @@ class TeleOp {
         url : this.host
       });
 
-      this.ros.on('error', (error) => {
+      this.ros.once('error', (error) => {
         debug('Connection error ' + this.host)
         debug(error)
         reject(error)
       });
       // Find out exactly when we made a connection.
-      this.ros.on('connection', () => {
+      this.ros.once('connection', () => {
         debug('Connection open ' + this.host)
         resolve()
       })
@@ -398,7 +398,7 @@ class TeleOp {
 
           let publicModelPath = ''
           if(urdfText != null && urdfText.length > 0){
-            let parser = new DOMParser()
+            /*let parser = new DOMParser()
             let xmlDoc = parser.parseFromString(urdfText, 'text/xml')
 
             const robotTag = xmlDoc.getElementsByTagName('robot')[0]
@@ -406,11 +406,11 @@ class TeleOp {
             debug('\t','urdf robot name', robotName, robotName.indexOf('magni'))
             if(robotName.indexOf('magni') != -1){
               publicModelPath = 'https://raw.githubusercontent.com/UbiquityRobotics/magni_robot/noetic-devel'
-            }
+            }*/
 
             try{
               obj = new ROS3D.UrdfClient({
-                path: publicModelPath,
+                path: '/packages/',
                 ros: this.ros,
                 param: paramPath,
                 rootObject: this.viewer.scene,

@@ -12,17 +12,30 @@ var browser_config = {
   mode: 'development',
   target: 'web',
   entry: {
-    '@teleop-xyz': './src/index.js'
+    'teleopxyz': {
+      import: './src/index.js',
+      library: {
+        name: 'teleopxyz',
+        type: 'var'
+      }
+    },
+    'service-worker': {
+      import: './src/service-worker.js',
+      library: {
+        name: 'self',
+        type: 'umd'
+      }
+    }
   },
   devtool: 'eval-source-map',
   optimization: {
     minimize: true
   },
   output: {
-    library: ['teleopxyz'],
-    libraryTarget: 'var',
-    path: path.join(__dirname, 'dist'),
-    filename: 'teleopxyz.js'
+    //library: ['teleopxyz'],
+    //libraryTarget: 'var',
+    path: path.join(__dirname, 'dist')
+    //filename: 'teleopxyz.js'
   },
   resolve: {
     fallback: {
