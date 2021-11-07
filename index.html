@@ -8,10 +8,14 @@
   <title>teleop.xyz - sense, plan, party 🤘</title>
 
 
-  <script type="text/javascript" src="static/js/three.min.js"></script>
-  <script type="text/javascript" src="static/js/eventemitter2.min.js"></script>
-  <script type="text/javascript" src="static/js/roslib.js"></script>
-  <script type="text/javascript" src="static/js/ros3d.js"></script>
+  <!--<script type="text/javascript" src="static/js/three.v0.134.0.js"></script>-->
+  <!--<script src="https://static.robotwebtools.org/threejs/r89/ColladaLoader.js"></script>
+  <script src="https://static.robotwebtools.org/threejs/r89/STLLoader.js"></script>-->
+  <!--<script type="text/javascript" src="static/js/eventemitter2.min.js"></script>-->
+  <script type="text/javascript" src="static/js/roslib.v1.1.0.js"></script>
+  <script type="text/javascript" src="static/js/ros3d.v1.1.1.js"></script>
+  <!--<script type="text/javascript" src="static/js/shim/ros3d-ColladaLoader.v1.0.1.js"></script>-->
+
   
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Roboto:ital,wght@1,900&family=Zen+Tokyo+Zoo&display=swap" rel="stylesheet">
   
@@ -20,7 +24,7 @@
 
 <script>
 
-let viz = null
+var viz = null
 
   
 function openConnectionForm(){
@@ -143,6 +147,10 @@ function gotoGithub(){
 
 function onServiceWorkerMessage(message){
   console.log('service-worker-message: ', message)
+
+  if(viz){
+    viz.onServiceWorkerMessage(message)
+  }
 }
 
 function onServicerWorkerError(error){

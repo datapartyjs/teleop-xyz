@@ -243,6 +243,53 @@ class TeleOp {
     this.updateJoy(gamepad)
   }
 
+  async getFile(path){
+    debug('getFile', path)
+    const fileClient = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/file_server/get_file',
+      serviceType : 'file_server/GetBinaryFile'
+    })
+
+    const request = new ROSLIB.ServiceRequest({
+      name: path
+    })
+  
+    return await new Promise((resolve,reject)=>{
+
+      fileClient.callService(request, (result) => {
+        debug('Result for service call on ' + fileClient.name + ': ' + result.value.length +'bytes')
+
+        resolve( atob(result.value) )
+      }, reject)
+
+    })
+  }
+
+  async onServiceWorkerMessage(message){
+    debug('srv says')
+
+    switch(reach(message,'data.type')){
+      case 'fetch-intercept-request':
+        if(this.ros){
+          debug('handling fetch intercept via connected ROS device', message.data.path)
+
+          const path = reach(message, 'data.path', '').replace('/virtual/pkg/', 'package://')
+          const fileContent = await this.getFile(path)
+
+          debug('sending service worker file ', path)
+
+          message.source.postMessage({
+            type: 'fetch-intercept-response',
+            path: message.data.path,
+            data: fileContent
+          })
+
+        }
+        break;
+    }
+  }
+
   async renderFromFile(){
 
     let displays = reach(this.fileContent, 'Visualization Manager.Displays', [])
@@ -396,7 +443,7 @@ class TeleOp {
 
           debug('\t','urdf', urdfText)
 
-          let publicModelPath = ''
+          let publicModelPath = '/virtual/pkg/'
           if(urdfText != null && urdfText.length > 0){
             /*let parser = new DOMParser()
             let xmlDoc = parser.parseFromString(urdfText, 'text/xml')
@@ -410,7 +457,7 @@ class TeleOp {
 
             try{
               obj = new ROS3D.UrdfClient({
-                path: '/packages/',
+                path: publicModelPath,
                 ros: this.ros,
                 param: paramPath,
                 rootObject: this.viewer.scene,
