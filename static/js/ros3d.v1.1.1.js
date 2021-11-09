@@ -57030,8 +57030,8 @@ var ROS3D = (function (exports, ROSLIB$1) {
 
 	    // construct the geometry
 	    
-	    for (i = 0; i < option.vertices.length; i++) {
-	      vertices.push(option.vertices[i].x, option.vertices[i].y, option.vertices[i].z);
+	    for (i = 0; i < options.vertices.length; i++) {
+	      vertices.push(options.vertices[i].x, options.vertices[i].y, options.vertices[i].z);
 	    }
 
 	    var geometry = new THREE$1.BufferGeometry();
@@ -57042,34 +57042,31 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    // set the colors
 	    var i, j;
 	    if (colors.length === vertices.length) {
+
 	      // use per-vertex color
 	      for (i = 0; i < vertices.length; i += 3) {
-	        var faceVert = new THREE$1.Face3(i, i + 1, i + 2);
 	        for (j = i * 3; j < i * 3 + 3; i++) {
 	          vertexColors.push(colors[i].r, colors[i].g, colors[i].b);
 	        }
-	        geometry.faces.push(faceVert);
 	      }
 	      material.vertexColors = THREE$1.VertexColors;
+	      geometry.setAttribute( 'color', new THREE$1.Float32BufferAttribute( vertexColors, 3 ) );
+
 	    } else if (colors.length === vertices.length / 3) {
+
 	      // use per-triangle color
 	      for (i = 0; i < vertices.length; i += 3) {
-	        var faceTri = new THREE$1.Face3(i, i + 1, i + 2);
-	        faceTri.color.setRGB(colors[i / 3].r, colors[i / 3].g, colors[i / 3].b);
-	        geometry.faces.push(faceTri);
+	        const idx = i / 3;
+	        vertexColors.push(colors[idx].r, colors[idx].g, colors[idx].b);
 	      }
 	      material.vertexColors = THREE$1.FaceColors;
-	    } else {
-	      // use marker color
-	      for (i = 0; i < vertices.length; i += 3) {
-	        var face = new THREE$1.Face3(i, i + 1, i + 2);
-	        geometry.faces.push(face);
-	      }
-	    }
+	      geometry.setAttribute( 'color', new THREE$1.Float32BufferAttribute( vertexColors, 3 ) );
+
+	    } else ;
 
 	    geometry.computeBoundingBox();
 	    geometry.computeBoundingSphere();
-	    geometry.computeFaceNormals();
+	    geometry.computeVertexNormals ();
 
 	    this.add(new THREE$1.Mesh(geometry, material));
 	  };
@@ -57204,9 +57201,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	        if (message.colors.length === message.points.length) {
 	          lineStripMaterial.vertexColors = true;
 	          for ( j = 0; j < message.points.length; j++) {
-	            var clr = new THREE$1.Color();
-	            clr.setRGB(message.colors[j].r, message.colors[j].g, message.colors[j].b);
-	            colors.push(clr);
+	            colors.push(message.colors[j].r, message.colors[j].g, message.colors[j].b);
 	          }
 
 	          lineStripGeom.setAttribute( 'color', new THREE$1.Float32BufferAttribute( colors, 3 ) );
@@ -57237,9 +57232,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	        if (message.colors.length === message.points.length) {
 	          lineListMaterial.vertexColors = true;
 	          for ( k = 0; k < message.points.length; k++) {
-	            var c = new THREE$1.Color();
-	            c.setRGB(message.colors[k].r, message.colors[k].g, message.colors[k].b);
-	            colors.push(c);
+	            colors.push(message.colors[k].r, message.colors[k].g, message.colors[k].b);
 	          }
 
 	          lineListGeom.setAttribute( 'color', new THREE$1.Float32BufferAttribute( colors, 3 ) );
@@ -57336,9 +57329,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	        if (message.colors.length === message.points.length) {
 	          material.vertexColors = true;
 	          for ( i = 0; i < message.points.length; i++) {
-	            var color = new THREE$1.Color();
-	            color.setRGB(message.colors[i].r, message.colors[i].g, message.colors[i].b);
-	            colors.push(color);
+	            colors.push(message.colors[i].r, message.colors[i].g, message.colors[i].b);
 	          }
 
 	          geometry.setAttribute( 'color', new THREE$1.Float32BufferAttribute( colors, 3 ) );
@@ -57723,7 +57714,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    var posInv = this.parent.position.clone().multiplyScalar(-1);
 	    switch (message.orientation_mode) {
 	      case INTERACTIVE_MARKER_INHERIT:
-	        rotInv = this.parent.quaternion.clone().inverse();
+	        rotInv = this.parent.quaternion.clone().invert();
 	        break;
 	      case INTERACTIVE_MARKER_FIXED:
 	        break;
@@ -57815,7 +57806,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	        that.currentControlOri.normalize();
 	        break;
 	      case INTERACTIVE_MARKER_FIXED:
-	        that.quaternion.copy(that.parent.quaternion.clone().inverse());
+	        that.quaternion.copy(that.parent.quaternion.clone().invert());
 	        that.updateMatrix();
 	        that.matrixWorldNeedsUpdate = true;
 	        super.updateMatrixWorld(force);
@@ -57830,8 +57821,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	        var rv = new THREE$1.Euler(-r90, 0, r90);
 	        ros2Gl.makeRotationFromEuler(rv);
 
-	        var worldToLocal = new THREE$1.Matrix4();
-	        worldToLocal.getInverse(that.parent.matrixWorld);
+	        var worldToLocal = new THREE$1.Matrix4().copy(that.parent.matrixWorld).invert();
 
 	        cameraRot.multiplyMatrices(cameraRot, ros2Gl);
 	        cameraRot.multiplyMatrices(worldToLocal, cameraRot);
@@ -58162,7 +58152,9 @@ var ROS3D = (function (exports, ROSLIB$1) {
 
 	      if(control.isShift);else {
 	        // we want to use the origin plane that is closest to the camera
-	        var cameraVector = control.camera.getWorldDirection();
+	        var cameraVector = new THREE$1.Vector3( );
+	        cameraVector = control.camera.getWorldDirection(cameraVector);
+
 	        var x = Math.abs(cameraVector.x);
 	        var y = Math.abs(cameraVector.y);
 	        var z = Math.abs(cameraVector.z);
@@ -58240,7 +58232,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 
 	      // rotates from world to plane coords
 	      var orientationWorld = this.dragStart.orientationWorld.clone().multiply(orientation);
-	      var orientationWorldInv = orientationWorld.clone().inverse();
+	      var orientationWorldInv = orientationWorld.clone().invert();
 
 	      // rotate original and current intersection into local coords
 	      intersection.sub(rotOrigin);
@@ -62708,7 +62700,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	          this.geom = new THREE$1.BufferGeometry();
 
 	          this.positions = new THREE$1.BufferAttribute( new Float32Array( this.max_pts * 3), 3, false );
-	          this.geom.setAttribute( 'position', this.positions.setDynamic(true) );
+	          this.geom.setAttribute( 'position', this.positions.setUsage(THREE$1.DynamicDrawUsage) );
 
 	          if(!this.colorsrc && this.fields.rgb) {
 	              this.colorsrc = 'rgb';
@@ -62717,7 +62709,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	              var field = this.fields[this.colorsrc];
 	              if (field) {
 	                  this.colors = new THREE$1.BufferAttribute( new Float32Array( this.max_pts * 3), 3, false );
-	                  this.geom.setAttribute( 'color', this.colors.setDynamic(true) );
+	                  this.geom.setAttribute( 'color', this.colors.setUsage(THREE$1.DynamicDrawUsage) );
 	                  var offset = field.offset;
 	                  this.getColor = [
 	                      function(dv,base,le){return dv.getInt8(base+offset,le);},
@@ -63493,19 +63485,42 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    this.fallbackTarget = options.fallbackTarget;
 	    this.lastTarget = this.fallbackTarget;
 	    this.dragging = false;
+	    this.listeners = null;
 
-	    // listen to DOM events
-	    var eventNames = [ 'contextmenu', 'click', 'dblclick', 'mouseout', 'mousedown', 'mouseup',
-	        'mousemove', 'mousewheel', 'DOMMouseScroll', 'touchstart', 'touchend', 'touchcancel',
-	        'touchleave', 'touchmove' ];
+	    this.start();
+	  };
+
+	  // listen to DOM events
+	  static get eventNames(){
+	    return [ 'contextmenu', 'click', 'dblclick', 'mouseout', 'mousedown', 'mouseup',
+	    'mousemove', 'mousewheel', 'DOMMouseScroll', 'touchstart', 'touchend', 'touchcancel',
+	    'touchleave', 'touchmove' ]
+	  }
+
+	  start(){
+	    if(this.listeners){ return }
+	    
 	    this.listeners = {};
 
 	    // add event listeners for the associated mouse events
-	    eventNames.forEach(function(eventName) {
+	    MouseHandler.eventNames.forEach(function(eventName) {
 	      this.listeners[eventName] = this.processDomEvent.bind(this);
 	      this.renderer.domElement.addEventListener(eventName, this.listeners[eventName], false);
 	    }, this);
-	  };
+	  }
+
+	  stop(){
+	    if(!this.listeners){ return }
+
+	    // add event listeners for the associated mouse events
+	    MouseHandler.eventNames.forEach(function(eventName) {
+	      this.renderer.domElement.removeEventListener(eventName, this.listeners[eventName]);
+
+	      delete this.listeners[eventName];
+	    }, this);
+
+	    this.listeners = null;
+	  }
 
 	  /**
 	   * Process the particular DOM even that has occurred based on the mouse's position in the scene.
@@ -64051,6 +64066,17 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	      }
 	    };
 
+	    this.listeners = {
+	      'mousedown': onMouseDown,
+	      'mouseup': onMouseUp,
+	      'mousemove': onMouseMove,
+	      'touchstart': onTouchDown,
+	      'touchmove': onTouchMove,
+	      'touchend': onTouchEnd,
+	      'mousewheel': onMouseWheel,
+	      'DOMMouseScroll': onMouseWheel
+	    };
+
 	    // add event listeners
 	    this.addEventListener('mousedown', onMouseDown);
 	    this.addEventListener('mouseup', onMouseUp);
@@ -64062,6 +64088,19 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    this.addEventListener('mousewheel', onMouseWheel);
 	    this.addEventListener('DOMMouseScroll', onMouseWheel);
 	  };
+
+	  stop(){
+	    if(!this.listeners){ return }
+
+	    // add event listeners for the associated mouse events
+	    Object.keys(this.listeners).forEach((eventName) => {
+	      this.removeEventListener(eventName, this.listeners[eventName]);
+
+	      delete this.listeners[eventName];
+	    });
+
+	    this.listeners = null;
+	  }
 
 	  /**
 	   * Display the main axes for 1 second.
@@ -64232,12 +64271,13 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	   *  * alpha (optional) - the alpha of the background
 	   *  * antialias (optional) - if antialiasing should be used
 	   *  * intensity (optional) - the lighting intensity setting to use
-	   *  * cameraPosition (optional) - the starting position of the camera
+	   *  * cameraPose (optional) - the starting position of the camera
 	   *  * displayPanAndZoomFrame (optional) - whether to display a frame when
 	   *  *                                     panning/zooming. Defaults to true.
 	   *  * lineTypePanAndZoomFrame - line type for the frame that is displayed when
 	   *  *                           panning/zooming. Only has effect when
 	   *  *                           displayPanAndZoomFrame is set to true.
+	   *  * vr - true/false
 	   */
 	  constructor(options) {
 	    options = options || {};
@@ -64256,15 +64296,16 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	      y : 3,
 	      z : 3
 	    };
-	    var cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
-	    var displayPanAndZoomFrame = (options.displayPanAndZoomFrame === undefined) ? true : !!options.displayPanAndZoomFrame;
-	    var lineTypePanAndZoomFrame = options.lineTypePanAndZoomFrame || 'full';
+	    this.cameraZoomSpeed = options.cameraZoomSpeed || 0.5;
+	    this.displayPanAndZoomFrame = (options.displayPanAndZoomFrame === undefined) ? true : !!options.displayPanAndZoomFrame;
+	    this.lineTypePanAndZoomFrame = options.lineTypePanAndZoomFrame || 'full';
 
 	    // create the canvas to render to
 	    this.renderer = new THREE$1.WebGLRenderer({
 	      antialias : antialias,
 	      alpha: true
 	    });
+
 	    this.renderer.setClearColor(parseInt(background.replace('#', '0x'), 16), alpha);
 	    this.renderer.sortObjects = false;
 	    this.renderer.setSize(width, height);
@@ -64279,14 +64320,8 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    this.camera.position.x = cameraPosition.x;
 	    this.camera.position.y = cameraPosition.y;
 	    this.camera.position.z = cameraPosition.z;
-	    // add controls to the camera
-	    this.cameraControls = new OrbitControls({
-	      scene : this.scene,
-	      camera : this.camera,
-	      displayPanAndZoomFrame : displayPanAndZoomFrame,
-	      lineTypePanAndZoomFrame: lineTypePanAndZoomFrame
-	    });
-	    this.cameraControls.userZoomSpeed = cameraZoomSpeed;
+
+	    
 
 	    // lights
 	    this.scene.add(new THREE$1.AmbientLight(0x555555));
@@ -64296,17 +64331,22 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    // propagates mouse events to three.js objects
 	    this.selectableObjects = new THREE$1.Group();
 	    this.scene.add(this.selectableObjects);
-	    var mouseHandler = new MouseHandler({
-	      renderer : this.renderer,
-	      camera : this.camera,
-	      rootObject : this.selectableObjects,
-	      fallbackTarget : this.cameraControls
-	    });
 
-	    // highlights the receiver of mouse events
-	    this.highlighter = new Highlighter({
-	      mouseHandler : mouseHandler
-	    });
+	    this.cameraGroup = null;
+	    this.cameraControls = null;
+	    this.highlighter = null;
+	    this.mouseHandler = null;
+
+	    if(!options.vr){
+
+	      this.disableXR();
+
+	    } else {
+
+	      this.enableXR();
+
+	    }
+	   
 
 	    this.stopped = true;
 	    this.animationRequestId = undefined;
@@ -64327,6 +64367,85 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    this.draw();
 	  };
 
+	  enableXR(){
+
+	    if(this.renderer.xr.enabled){ return }
+
+	    //Add group for teleportation help
+	    this.cameraGroup = new THREE$1.Group();
+	    this.cameraGroup.add(this.camera);
+	    this.scene.add(this.cameraGroup);
+
+	    this.cameraGroup.up = new THREE$1.Vector3(0, 0, 1);
+
+	    this.camera.position.set(0,0,0,);
+	    this.cameraGroup.position.set(3,3,3);
+
+	    let center = new THREE$1.Vector3();
+
+	    this.cameraGroup.lookAt(center);
+
+	    if(this.mouseHandler){
+	      this.mouseHandler.stop();
+	      delete this.mouseHandler;
+	      this.mouseHandler = null;
+	    }
+
+	    if(this.highlighter){
+	      delete this.highlighter;
+	      this.highlighter = null;
+	    }
+
+	    if(this.cameraControls){
+	      this.cameraControls.stop();
+	      delete this.cameraControls;
+	      this.cameraControls = null;
+	    }
+
+	    this.renderer.xr.enabled = true;
+	  }
+
+	  disableXR(){
+	    if(this.cameraGroup){
+	      this.scene.remove(this.cameraGroup);
+	      this.cameraGroup.remove(this.camera);
+	    }
+
+	    if(!this.cameraControls){
+	      // add controls to the camera
+	      this.cameraControls = new OrbitControls({
+	        scene : this.scene,
+	        camera : this.camera,
+	        displayPanAndZoomFrame : this.displayPanAndZoomFrame,
+	        lineTypePanAndZoomFrame: this.lineTypePanAndZoomFrame
+	      });
+	      this.cameraControls.userZoomSpeed = this.cameraZoomSpeed;
+	    }
+
+	    if(!this.mouseHandler){
+	      this.mouseHandler = new MouseHandler({
+	        renderer : this.renderer,
+	        camera : this.camera,
+	        rootObject : this.selectableObjects,
+	        fallbackTarget : this.cameraControls
+	      });
+	    }
+	    
+	    if(!this.mouseHandler){
+	      // highlights the receiver of mouse events
+	      this.highlighter = new Highlighter({
+	        mouseHandler : this.mouseHandler
+	      });
+	    }
+
+	    if(this.cameraGroup){
+	      delete this.cameraGroup;
+	      this.cameraGroup = null;
+	    }
+
+	    this.renderer.xr.enabled = false;
+	  }
+
 	  /**
 	   * Renders the associated scene to the viewer.
 	   */
@@ -64336,8 +64455,11 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	      return;
 	    }
 
-	    // update the controls
-	    this.cameraControls.update();
+	    if(!this.renderer.xr.enabled && this.cameraControls){
+	      // update the controls
+	      this.cameraControls.update();
+	    }
+	    
 
 	    // put light to the top-left of the camera
 	    // BUG: position is a read-only property of DirectionalLight,
@@ -64348,10 +64470,13 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    // set the scene
 	    this.renderer.clear(true, true, true);
 	    this.renderer.render(this.scene, this.camera);
-	    this.highlighter.renderHighlights(this.scene, this.renderer, this.camera);
+	    
+	    if(!this.renderer.xr.enabled && this.highlighter){
+	      this.highlighter.renderHighlights(this.scene, this.renderer, this.camera);
+	    }
 
 	    // draw the frame
-	    this.animationRequestId = requestAnimationFrame(this.draw.bind(this));
+	    this.animationRequestId = this.renderer.setAnimationLoop(this.draw.bind(this));
 	  };
 
 	  /**

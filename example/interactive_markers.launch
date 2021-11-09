@@ -26,6 +26,7 @@
   </group>
 
 
+  <node name="file_server" pkg="file_server" type="file_server"/>
 
   <node name="rosapi" pkg="rosapi" type="rosapi_node" />
   <node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher"/> 

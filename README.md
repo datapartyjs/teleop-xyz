@@ -16,7 +16,15 @@
 ## Requirements 
 
  * Device running [ROS](https://www.ros.org/) 🤖
- * [rosbridge_suite](http://wiki.ros.org/rosbridge_suite)
+ * [rosbridge_websocket](http://wiki.ros.org/rosbridge_suite)
+ * [tf2_web_republisher]()
+ * [rosapi]()
+
+ Optional
+ * [file_server]()
+ * [web_video_server]()
+ * [depthcloud_encoder]()
+ * [point_downsample]()
 
 See [`example/point_cloud.launch`](example/point_cloud.launch) for a typical roslaunch configuration.
 

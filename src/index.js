@@ -12,16 +12,14 @@ console.log(Pkg.name, 'v'+Pkg.version, '🤖')
 console.log('sense, plan, party 🤘')
 console.log('\n\nWelcome fellow humans\n\nset localStorage.debug=\'*\' to activate debug output')
 
-function hasGamepadSupport(){
-  return navigator.getGamepads !== undefined
-}
 
 const TfTree = require('./TfTree')
 
-class TeleOp {
+export class TeleOp {
   constructor(){
     debug('new TeleOp')
 
+    this.vr = false
     this.ros = null
     this.host = null
     this.fileContent = null
@@ -38,10 +36,53 @@ class TeleOp {
     this.joyUserOptIn = null
     this.joyAutoRepeatRate = 4
     this.joyRepeatTimer = null
+
+    this.xrSession = null
   }
 
   static get version(){
     return Pkg.version
+  }
+
+  static hasGamepadSupport(){
+    return navigator.getGamepads !== undefined
+  }
+
+  static async hasWebXRSupport(){
+    if ("xr" in window.navigator){
+      let supported = await navigator.xr.isSessionSupported( 'immersive-vr' )
+
+      debug('WebXR support =', supported)
+
+      return supported ? true : false
+    }
+
+    return false
+  }
+
+  async enterXR(){
+    if(this.xrSession){ return }
+
+    const sessionInit = { optionalFeatures: [ 'local-floor', 'bounded-floor', 'hand-tracking', 'layers' ] };
+		this.xrSession = await navigator.xr.requestSession( 'immersive-vr', sessionInit )
+    this.xrSession.addEventListener('end', this.onXRSessionEnd.bind(this))
+
+    await this.viewer.renderer.xr.setSession( this.xrSession )
+
+    this.viewer.enableXR()
+  }
+
+  exitXR(){
+    if(!this.xrSession){ return }
+
+    this.xrSession.end()
+  }
+
+  onXRSessionEnd(){
+    this.viewer.disableXR()
+    this.xrSession.removeEventListener( 'end', this.onXRSessionEnd.bind(this) );
+    delete this.xrSession
+    this.xrSession = null
   }
 
   async connectRos(){
@@ -97,7 +138,13 @@ class TeleOp {
       width: this.div.clientWidth,
       height: this.div.clientHeight,
       antialias: true,
-      background: globalOptions.background
+      background: globalOptions.background,
+      vr: this.vr,
+      cameraPose: {
+        x: 3,
+        y: 3,
+        z: 3
+      }
     });
 
     window.onresize = (e)=>{this.onResize(e)}
@@ -122,7 +169,7 @@ class TeleOp {
       fixedFrame: globalOptions.fixedFrame
     })
 
-    if(hasGamepadSupport()){
+    if(TeleOp.hasGamepadSupport()){
       debug('enabling gamepad support')
       this.gamepadListener = new GamepadListener({analog: true/*, deadZone: 0.2*/})
       this.gamepadListener.on('gamepad:connected', this.addGamepad.bind(this))
@@ -443,21 +490,12 @@ class TeleOp {
 
           debug('\t','urdf', urdfText)
 
-          let publicModelPath = '/virtual/pkg/'
+          
           if(urdfText != null && urdfText.length > 0){
-            /*let parser = new DOMParser()
-            let xmlDoc = parser.parseFromString(urdfText, 'text/xml')
-
-            const robotTag = xmlDoc.getElementsByTagName('robot')[0]
-            const robotName = robotTag.getAttribute('name')
-            debug('\t','urdf robot name', robotName, robotName.indexOf('magni'))
-            if(robotName.indexOf('magni') != -1){
-              publicModelPath = 'https://raw.githubusercontent.com/UbiquityRobotics/magni_robot/noetic-devel'
-            }*/
 
             try{
               obj = new ROS3D.UrdfClient({
-                path: publicModelPath,
+                path: '/virtual/pkg/',
                 ros: this.ros,
                 param: paramPath,
                 rootObject: this.viewer.scene,
@@ -569,4 +607,3 @@ class TeleOp {
   }
 }
 
-module.exports=TeleOp;

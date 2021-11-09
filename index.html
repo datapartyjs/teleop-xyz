@@ -20,190 +20,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Roboto:ital,wght@1,900&family=Zen+Tokyo+Zoo&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="static/main.css">
+  
   <script type="text/javascript" src="dist/teleopxyz.js"></script>
+  <script type="module" src="static/main.js"></script>
 
-<script>
-
-var viz = null
-
-  
-function openConnectionForm(){
-  var modal = document.getElementById("myModal")
-  modal.style.display = "block";
-
-  var logo = document.getElementById('logo')
-  logo.classList.remove('hidden')
-}
-
-function closeConnectionForm(){
-  if(viz == null){
-    return
-  }
-  var modal = document.getElementById("myModal");
-  modal.style.display = "none";
-  var logo = document.getElementById('logo')
-  logo.classList.add('hidden')
-}
-
-function setConnectionStatus(text, color){
-  const statusText = document.getElementById('status-text')
-  statusText.textContent = text+' '
-
-  const statusDot = document.getElementById('status-dot')
-  statusDot.style.color = color
-  statusDot.style.backgroundColor = color
-}
-
-async function init(){
-  const form = document.getElementsByName('connectionForm')[0]
-  form.addEventListener('submit', startConnection);
-
-  const versionText = document.getElementById('version-text')
-  versionText.innerText = 'v'+teleopxyz.version
-
-  // Get the modal
-  var modal = document.getElementById("myModal");
-
-  // Get the button that opens the modal
-  var btn = document.getElementById("myBtn");
-
-  // Get the <span> element that closes the modal
-  var span = document.getElementsByClassName("close")[0];
-
-  // When the user clicks on <span> (x), close the modal
-  span.onclick = closeConnectionForm
-
-  // When the user clicks anywhere outside of the modal, close it
-  window.onclick = function(event) {
-    if (event.target == modal) {
-      closeConnectionForm()
-    }
-  }
-
-  await setConnectionStatus('Offline', 'grey')
-  openConnectionForm()
-
-
-  await setupServiceWorker()
-
-}
-
-
-
-
-async function startConnection(e){
-  event.preventDefault()
-  console.log('startConnection')
-  const formData = new FormData(e.target);
-  const formProps = Object.fromEntries(formData);
-  const reader = new FileReader()
-  console.log(formProps)
-
-  let fileLoad = new Promise((resolve, reject)=>{
-    reader.onload = resolve
-    reader.onabort = reject
-    reader.addEventListener('error', reject)
-  })
-  
-  reader.readAsText(formProps.rvizFile)
-
-  await fileLoad
-
-  console.log(reader.result)
-
-  viz = new teleopxyz()
-
-  try{
-    await viz.start(formProps.rosapiHost, reader.result)
-
-    const helpText = document.getElementById('help-text')
-    helpText.classList.add('hidden')
-  }
-  catch(err){
-    console.log('error', err)
-    setConnectionStatus('Error:  '+formProps.rosapiHost, 'red')
-
-    const helpText = document.getElementById('help-text')
-    helpText.classList.remove('hidden')
-    viz = null
-
-    return
-  }
-  
-
-  closeConnectionForm()
-
-  setConnectionStatus('Connected to: '+formProps.rosapiHost, 'rgb(0, 255, 72)')
-
-}
-
-function reload(){
-  window.location = ''+window.location
-}
-
-function gotoGithub(){
-  window.location = 'https://github.com/datapartyjs/teleop-xyz'
-}
-
-function onServiceWorkerMessage(message){
-  console.log('service-worker-message: ', message)
-
-  if(viz){
-    viz.onServiceWorkerMessage(message)
-  }
-}
-
-function onServicerWorkerError(error){
-  console.error('service-worker-error: ', error)
-}
-
-let serviceWorker
-
-async function setupServiceWorker(){
-  if ('serviceWorker' in navigator) {
-    const registration = await navigator.serviceWorker.register('service-worker.js')
-
-    navigator.serviceWorker.addEventListener('message', onServiceWorkerMessage)
-    navigator.serviceWorker.addEventListener('error', onServicerWorkerError)
-
-    registration.addEventListener('updatefound', ()=>{
-      console.log('service-worker-registration: Update found')
-    })
-
-
-    if (registration.installing) {
-      serviceWorker = registration.installing
-      console.log('servicer-worker installing')
-    } else if (registration.waiting) {
-      serviceWorker = registration.waiting
-      console.log('servicer-worker waiting')
-    } else if (registration.active) {
-      serviceWorker = registration.active
-      console.log('servicer-worker active')
-    }
-
-    if (serviceWorker) {
-      // logState(serviceWorker.state);
-      serviceWorker.addEventListener('statechange',  (event) => {
-        console.log('servicer-worker statechange ', event)
-      })
-
-    }
-  } else {
-      // The current browser doesn't support service workers.
-      console.warn('service-worker: No service worker support')
-  }
-}
-
-</script>
 </head>
 
-<body onload="init()">
+<body>
 
 
 
   <div class="box">
-    <div class='header' id='header' onclick='reload()'>teleop.xyz</div>
+    <div class='header' id='header'>teleop.xyz</div>
 
     <div class="status-area">
       <span id='status-text'>Status</span><span id='status-dot' class='green-dot'></span>
@@ -241,7 +69,7 @@ async function setupServiceWorker(){
               <center><button class='setup-submit' type="submit">connect</button></center>
             </p>
         </div>
-        <div class="modal-footer" onclick='gotoGithub()'>
+        <div class="modal-footer" id='modal-footer'>
           <h3>About  
             <a href='https://github.com/datapartyjs/teleop-xyz' target='_'> <img src='static/images/github.png' height="32px"></a>
           </h3>
@@ -253,7 +81,7 @@ async function setupServiceWorker(){
 
     <div class="center-modal rainbows" id='logo' hidden=true>teleop.xyz</div>
 
-
+    <button class='vr-button hidden' id='vr-button'>Enter VR</button>
 
     <footer class='footer'>
       </span> teleop.xyz - <span id='version-text'></span> © 2021 <a href='https://www.dataparty.xyz/'>dataparty llc</a>
