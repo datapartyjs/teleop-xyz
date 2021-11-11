@@ -59,7 +59,7 @@ console.log('init')
   document.getElementById('header').addEventListener('click', reload)
   document.getElementById('modal-footer').addEventListener('click', gotoGithub)
 
-  document.getElementById('vr-button').addEventListener('click', startVR)
+  document.getElementById('vr-button').addEventListener('click', startXR)
 
   await setConnectionStatus('Offline', 'grey')
   openConnectionForm()
@@ -69,7 +69,7 @@ console.log('init')
 
 }
 
-async function startVR(){
+async function startXR(){
   await viz.enterXR()
 }
 

@@ -20,6 +20,7 @@ class TfTree extends THREE.Object3D {
     this.tfClient = tfClient
     this.rootObject = rootObject
     this.axisScale = scale || 1.0
+    this.lineType = 'full'
     this.frames = {} //! Map of frameName to frameEnabled
 
     for(const [frame, enabled] of Object.entries(frames)){
@@ -88,8 +89,8 @@ class TfTree extends THREE.Object3D {
 
   stopListeningForFrames(){
     debug('stopListeningForFrames done')
-    this.tfSub.unsubscribe()
-    this.tfStaticSub.unsubscribe()
+    this.tfSub.unsubscribe(this.handleTfMessage.bind(this))
+    this.tfStaticSub.unsubscribe(this.handleTfMessage.bind(this))
 
     this.subscribe()
   }
@@ -101,6 +102,17 @@ class TfTree extends THREE.Object3D {
 
       if(enabled){
         debug('subscribing to frame', frame)
+
+        /*let tfAxes = new ROS3D.TFAxes({
+          frame_id: frame,
+          tfClient: this.tfClient,
+          scale: this.axisScale/5.0
+        })
+
+        this.sceneNodes[frame] = tfAxes
+        this.rootObject.add(this.sceneNodes[frame])*/
+
+
         let axis = new ROS3D.Axes({
           lineType: 'full',
           shaftRadius: 0.04,

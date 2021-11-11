@@ -57036,30 +57036,34 @@ var ROS3D = (function (exports, ROSLIB$1) {
 
 	    var geometry = new THREE$1.BufferGeometry();
 	    geometry.setAttribute( 'position', new THREE$1.Float32BufferAttribute( vertices, 3 ) );
-	    geometry.computeVertexNormals();
+
 
 
 	    // set the colors
 	    var i, j;
-	    if (colors.length === vertices.length) {
+	    if (colors.length === options.vertices.length ) {
 
 	      // use per-vertex color
-	      for (i = 0; i < vertices.length; i += 3) {
+	      for (i = 0; i < options.vertices.length; i += 3) {
 	        for (j = i * 3; j < i * 3 + 3; i++) {
 	          vertexColors.push(colors[i].r, colors[i].g, colors[i].b);
 	        }
 	      }
-	      material.vertexColors = THREE$1.VertexColors;
+	      material.vertexColors = true;
 	      geometry.setAttribute( 'color', new THREE$1.Float32BufferAttribute( vertexColors, 3 ) );
 
-	    } else if (colors.length === vertices.length / 3) {
+	    } else if (colors.length === options.vertices.length / 3) {
 
 	      // use per-triangle color
-	      for (i = 0; i < vertices.length; i += 3) {
+	      for (i = 0; i < options.vertices.length; i += 3) {
 	        const idx = i / 3;
-	        vertexColors.push(colors[idx].r, colors[idx].g, colors[idx].b);
+	        vertexColors.push(colors[idx].r, colors[idx].g, colors[idx].b,
+	          colors[idx].r, colors[idx].g, colors[idx].b,
+	          colors[idx].r, colors[idx].g, colors[idx].b
+	        );
 	      }
-	      material.vertexColors = THREE$1.FaceColors;
+
+	      material.vertexColors = true;
 	      geometry.setAttribute( 'color', new THREE$1.Float32BufferAttribute( vertexColors, 3 ) );
 
 	    } else ;
@@ -60425,7 +60429,6 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	  constructor(options) {
 	    super();
 	    options = options || {};
-	    var that = this;
 	    this.tfClient = options.tfClient;
 	    this.frameID = options.frameID;
 	    var object = options.object;
@@ -60441,20 +60444,20 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    this.updatePose(this.pose);
 
 	    // save the TF handler so we can remove it later
-	    this.tfUpdate = function(msg) {
+	    this.tfUpdate = (msg) => {
 
 	      // apply the transform
-	      var tf = new ROSLIB.Transform(msg);
-	      var poseTransformed = new ROSLIB.Pose(that.pose);
+	      let tf = new ROSLIB.Transform(msg);
+	      let poseTransformed = new ROSLIB.Pose(this.pose);
 	      poseTransformed.applyTransform(tf);
 
 	      // update the world
-	      that.updatePose(poseTransformed);
-	      that.visible = true;
+	      this.updatePose(poseTransformed);
+	      this.visible = true;
 	    };
 
 	    // listen for TF updates
-	    this.tfClient.subscribe(this.frameID, this.tfUpdate);
+	    this.tfClient.subscribe(this.frameID, this.tfUpdate.bind(this));
 	  };
 
 	  /**
@@ -60470,7 +60473,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	  };
 
 	  unsubscribeTf() {
-	    this.tfClient.unsubscribe(this.frameID, this.tfUpdate);
+	    this.tfClient.unsubscribe(this.frameID, this.tfUpdate.bind(this));
 	  };
 	}
 
@@ -62100,7 +62103,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	  };
 
 	  processMessage(message){
-	    if(this.sns.length >= this.keep) {
+	    while(this.sns.length >= this.keep) {
 	        this.sns[0].unsubscribeTf();
 	        this.rootObject.remove(this.sns[0]);
 	        this.sns.shift();
@@ -64001,7 +64004,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 
 	        rotateStart.copy(rotateEnd);
 	        this.showAxes();
-	      } else {
+	      } else if(event.touches.length >= 2) {
 	        touchMoveVector[0].set(touchStartPosition[0].x - event.touches[0].pageX,
 	                               touchStartPosition[0].y - event.touches[0].pageY);
 	        touchMoveVector[1].set(touchStartPosition[1].x - event.touches[1].pageX,
@@ -64277,7 +64280,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	   *  * lineTypePanAndZoomFrame - line type for the frame that is displayed when
 	   *  *                           panning/zooming. Only has effect when
 	   *  *                           displayPanAndZoomFrame is set to true.
-	   *  * vr - true/false
+	   *  * xr - true/false
 	   */
 	  constructor(options) {
 	    options = options || {};
@@ -64337,7 +64340,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    this.highlighter = null;
 	    this.mouseHandler = null;
 
-	    if(!options.vr){
+	    if(!options.xr){
 
 	      this.disableXR();
 
@@ -64431,7 +64434,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	      });
 	    }
 	    
-	    if(!this.mouseHandler){
+	    if(!this.highlighter){
 	      // highlights the receiver of mouse events
 	      this.highlighter = new Highlighter({
 	        mouseHandler : this.mouseHandler
@@ -64455,7 +64458,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	      return;
 	    }
 
-	    if(!this.renderer.xr.enabled && this.cameraControls){
+	    if(this.cameraControls){
 	      // update the controls
 	      this.cameraControls.update();
 	    }
@@ -64471,7 +64474,7 @@ var ROS3D = (function (exports, ROSLIB$1) {
 	    this.renderer.clear(true, true, true);
 	    this.renderer.render(this.scene, this.camera);
 	    
-	    if(!this.renderer.xr.enabled && this.highlighter){
+	    if(this.highlighter){
 	      this.highlighter.renderHighlights(this.scene, this.renderer, this.camera);
 	    }
 

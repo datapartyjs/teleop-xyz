@@ -19,7 +19,7 @@ export class TeleOp {
   constructor(){
     debug('new TeleOp')
 
-    this.vr = false
+    this.xr = false
     this.ros = null
     this.host = null
     this.fileContent = null
@@ -139,7 +139,7 @@ export class TeleOp {
       height: this.div.clientHeight,
       antialias: true,
       background: globalOptions.background,
-      vr: this.vr,
+      xr: this.xr,
       cameraPose: {
         x: 3,
         y: 3,
@@ -149,22 +149,16 @@ export class TeleOp {
 
     window.onresize = (e)=>{this.onResize(e)}
 
-    /*this.viewer.addObject(new ROS3D.Grid({
-      color:'#0181c4',
-      cellSize: 1.0,
-      num_cells: 20
-    }));*/
-
 
     console.log('Globals', { globalOptions })
-
 
 
     this.tfClient = new ROSLIB.TFClient({
       ros: this.ros,
       serverName: `/tf2_web_republisher`,   //! Need to make configurable and autodetect correct one on the fly
-      angularThres: 0.03,
+      angularThres: 0.2,
       transThres: 0.01,
+      rate: 10,
       //rate: globalOptions.frameRate,
       fixedFrame: globalOptions.fixedFrame
     })
