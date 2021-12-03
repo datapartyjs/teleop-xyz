@@ -25,8 +25,9 @@ See [`example/point_cloud.launch`](example/point_cloud.launch) for a typical ros
  * [Twitter](https://twitter.com/datapartyjs)
  * Donate 🤲
    * Cash.App - [$datapartyllc](https://cash.app/DatapartyLLC)
-   * $btc - `37gHpAMCeYutB8DNbSnxHfwpuqSEs4kFAq`
    * $eth - `0x430c1Bf9CbbbEA845651Ba1536d4B9795696dD5d`
+   * $btc(segwit) - `bc1qgynk82txpsadmmzz043lc7edcxd4xl5v8qqr0z`
+   * $btc(legacy) - `16wW7HaKvQfoWxZkFEPQysMnyNxjn8YNLN`
 
 ## Video Demo
 
