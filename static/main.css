@@ -35,6 +35,23 @@ a:visited {
   display: none;
 }
 
+.vr-button {
+  position: absolute;
+  left: calc(50% - 50px);
+  cursor: pointer;
+  width: 100px;
+  bottom: 20px;
+  padding: 12px 6px;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.1);
+  color: #fff;
+  font: normal 13px sans-serf;
+  text-align: center;
+  opacity: 0.75;
+  outline: none;
+  z-index: 3;
+}
 
 .content {
   z-index: 0;

@@ -12,16 +12,14 @@ console.log(Pkg.name, 'v'+Pkg.version, '🤖')
 console.log('sense, plan, party 🤘')
 console.log('\n\nWelcome fellow humans\n\nset localStorage.debug=\'*\' to activate debug output')
 
-function hasGamepadSupport(){
-  return navigator.getGamepads !== undefined
-}
 
 const TfTree = require('./TfTree')
 
-class TeleOp {
+export class TeleOp {
   constructor(){
     debug('new TeleOp')
 
+    this.xr = false
     this.ros = null
     this.host = null
     this.fileContent = null
@@ -38,10 +36,53 @@ class TeleOp {
     this.joyUserOptIn = null
     this.joyAutoRepeatRate = 4
     this.joyRepeatTimer = null
+
+    this.xrSession = null
   }
 
   static get version(){
     return Pkg.version
+  }
+
+  static hasGamepadSupport(){
+    return navigator.getGamepads !== undefined
+  }
+
+  static async hasWebXRSupport(){
+    if ("xr" in window.navigator){
+      let supported = await navigator.xr.isSessionSupported( 'immersive-vr' )
+
+      debug('WebXR support =', supported)
+
+      return supported ? true : false
+    }
+
+    return false
+  }
+
+  async enterXR(){
+    if(this.xrSession){ return }
+
+    const sessionInit = { optionalFeatures: [ 'local-floor', 'bounded-floor', 'hand-tracking', 'layers' ] };
+		this.xrSession = await navigator.xr.requestSession( 'immersive-vr', sessionInit )
+    this.xrSession.addEventListener('end', this.onXRSessionEnd.bind(this))
+
+    await this.viewer.renderer.xr.setSession( this.xrSession )
+
+    this.viewer.enableXR()
+  }
+
+  exitXR(){
+    if(!this.xrSession){ return }
+
+    this.xrSession.end()
+  }
+
+  onXRSessionEnd(){
+    this.viewer.disableXR()
+    this.xrSession.removeEventListener( 'end', this.onXRSessionEnd.bind(this) );
+    delete this.xrSession
+    this.xrSession = null
   }
 
   async connectRos(){
@@ -52,13 +93,13 @@ class TeleOp {
         url : this.host
       });
 
-      this.ros.on('error', (error) => {
+      this.ros.once('error', (error) => {
         debug('Connection error ' + this.host)
         debug(error)
         reject(error)
       });
       // Find out exactly when we made a connection.
-      this.ros.on('connection', () => {
+      this.ros.once('connection', () => {
         debug('Connection open ' + this.host)
         resolve()
       })
@@ -97,32 +138,32 @@ class TeleOp {
       width: this.div.clientWidth,
       height: this.div.clientHeight,
       antialias: true,
-      background: globalOptions.background
+      background: globalOptions.background,
+      xr: this.xr,
+      cameraPose: {
+        x: 3,
+        y: 3,
+        z: 3
+      }
     });
 
     window.onresize = (e)=>{this.onResize(e)}
-
-    /*this.viewer.addObject(new ROS3D.Grid({
-      color:'#0181c4',
-      cellSize: 1.0,
-      num_cells: 20
-    }));*/
 
 
     console.log('Globals', { globalOptions })
 
 
-
     this.tfClient = new ROSLIB.TFClient({
       ros: this.ros,
       serverName: `/tf2_web_republisher`,   //! Need to make configurable and autodetect correct one on the fly
-      angularThres: 0.03,
+      angularThres: 0.2,
       transThres: 0.01,
+      rate: 10,
       //rate: globalOptions.frameRate,
       fixedFrame: globalOptions.fixedFrame
     })
 
-    if(hasGamepadSupport()){
+    if(TeleOp.hasGamepadSupport()){
       debug('enabling gamepad support')
       this.gamepadListener = new GamepadListener({analog: true/*, deadZone: 0.2*/})
       this.gamepadListener.on('gamepad:connected', this.addGamepad.bind(this))
@@ -241,6 +282,53 @@ class TeleOp {
 
     const gamepad = reach(event, 'detail.gamepad')
     this.updateJoy(gamepad)
+  }
+
+  async getFile(path){
+    debug('getFile', path)
+    const fileClient = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/file_server/get_file',
+      serviceType : 'file_server/GetBinaryFile'
+    })
+
+    const request = new ROSLIB.ServiceRequest({
+      name: path
+    })
+  
+    return await new Promise((resolve,reject)=>{
+
+      fileClient.callService(request, (result) => {
+        debug('Result for service call on ' + fileClient.name + ': ' + result.value.length +'bytes')
+
+        resolve( atob(result.value) )
+      }, reject)
+
+    })
+  }
+
+  async onServiceWorkerMessage(message){
+    debug('srv says')
+
+    switch(reach(message,'data.type')){
+      case 'fetch-intercept-request':
+        if(this.ros){
+          debug('handling fetch intercept via connected ROS device', message.data.path)
+
+          const path = reach(message, 'data.path', '').replace('/virtual/pkg/', 'package://')
+          const fileContent = await this.getFile(path)
+
+          debug('sending service worker file ', path)
+
+          message.source.postMessage({
+            type: 'fetch-intercept-response',
+            path: message.data.path,
+            data: fileContent
+          })
+
+        }
+        break;
+    }
   }
 
   async renderFromFile(){
@@ -396,21 +484,12 @@ class TeleOp {
 
           debug('\t','urdf', urdfText)
 
-          let publicModelPath = ''
+          
           if(urdfText != null && urdfText.length > 0){
-            let parser = new DOMParser()
-            let xmlDoc = parser.parseFromString(urdfText, 'text/xml')
-
-            const robotTag = xmlDoc.getElementsByTagName('robot')[0]
-            const robotName = robotTag.getAttribute('name')
-            debug('\t','urdf robot name', robotName, robotName.indexOf('magni'))
-            if(robotName.indexOf('magni') != -1){
-              publicModelPath = 'https://raw.githubusercontent.com/UbiquityRobotics/magni_robot/noetic-devel'
-            }
 
             try{
               obj = new ROS3D.UrdfClient({
-                path: publicModelPath,
+                path: '/virtual/pkg/',
                 ros: this.ros,
                 param: paramPath,
                 rootObject: this.viewer.scene,
@@ -522,4 +601,3 @@ class TeleOp {
   }
 }
 
-module.exports=TeleOp;

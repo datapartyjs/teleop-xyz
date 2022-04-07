@@ -34,6 +34,8 @@
     <param name="quality" value="55"/>
   </node>
 
+  <node name="file_server" pkg="file_server" type="file_server"/>
+
   <node name="depthcloud_encoder" pkg="depthcloud_encoder" type="depthcloud_encoder_node">
     <param name="depth" value="/camera/depth_registered/image_float"/>
     <param name="rgb" value="/camera/rgb/image_rect_color"/>
