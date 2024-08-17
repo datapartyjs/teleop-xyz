@@ -32,7 +32,7 @@ See [`example/point_cloud.launch`](example/point_cloud.launch) for a typical ros
 
  * [Twitter](https://twitter.com/datapartyjs)
  * Donate 🤲
-   * Cash.App - [ko-fi/dataparty](https://ko-fi.com/dataparty)
+   * [ko-fi/dataparty](https://ko-fi.com/dataparty)
    
 ## Video Demo
 
