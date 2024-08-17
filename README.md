@@ -32,11 +32,8 @@ See [`example/point_cloud.launch`](example/point_cloud.launch) for a typical ros
 
  * [Twitter](https://twitter.com/datapartyjs)
  * Donate 🤲
-   * Cash.App - [$datapartyllc](https://cash.app/DatapartyLLC)
-   * $eth - `0x430c1Bf9CbbbEA845651Ba1536d4B9795696dD5d`
-   * $btc(segwit) - `bc1qgynk82txpsadmmzz043lc7edcxd4xl5v8qqr0z`
-   * $btc(legacy) - `16wW7HaKvQfoWxZkFEPQysMnyNxjn8YNLN`
-
+   * Cash.App - [ko-fi/dataparty](https://ko-fi.com/dataparty)
+   
 ## Video Demo
 
 [![Video of connecting to ROS device](http://img.youtube.com/vi/F6qQgA2zwfc/0.jpg)](http://www.youtube.com/watch?v=F6qQgA2zwfc)
