@@ -30,7 +30,7 @@ See [`example/point_cloud.launch`](example/point_cloud.launch) for a typical ros
 
 ## Follow and Support
 
- * [Twitter](https://twitter.com/datapartyjs)
+ * Mastodon [@dataparty@partyon.xyz](https://partyon.xyz/@dataparty)
  * Donate 🤲
    * [ko-fi/dataparty](https://ko-fi.com/dataparty)
    
